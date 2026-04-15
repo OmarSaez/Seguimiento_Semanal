@@ -122,6 +122,13 @@
   border-radius: 8px;
 }
 
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
 .login-button {
   display: flex;
   align-items: center;
@@ -133,17 +140,79 @@
   border-radius: 12px;
   font-weight: 600;
   font-size: 1rem;
-  margin-top: 8px;
 }
 
-.login-button:hover {
+.login-button:hover:not(:disabled) {
   background: var(--primary-hover);
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
 }
 
-.login-button:active {
-  transform: translateY(0);
+.login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.back-button {
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.back-button:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Role Selection Styles */
+.role-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.role-button {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  border-radius: 16px;
+  text-align: left;
+  color: var(--text-main);
+}
+
+.role-button span {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.role-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-4px);
+  border-color: var(--primary);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.role-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.role-icon.student {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.role-icon.teacher {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary);
 }
 
 .login-footer {

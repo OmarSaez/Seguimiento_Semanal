@@ -8,6 +8,7 @@ import './Login.css';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [userRole, setUserRole] = useState(null); // null, 'STUDENT', 'TEACHER'
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -18,9 +19,10 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Basic Auth Header
-      const authHeader = 'Basic ' + btoa(`${email}:${password}`);
-      
+      // Si es estudiante, usamos la contraseña fija definida en el backend
+      const loginPassword = userRole === 'STUDENT' ? 'student_access' : password;
+      const authHeader = 'Basic ' + btoa(`${email}:${loginPassword}`);
+
       const response = await axios.get('http://localhost:8080/api/v1/auth/me', {
         headers: {
           'Authorization': authHeader
@@ -30,22 +32,38 @@ const Login = () => {
       if (response.status === 200) {
         const { roles, email: userEmail } = response.data;
         const isAdmin = roles.includes('ROLE_ADMIN');
-        
-        // Guardar estado de autenticación
+
+        // Verificar que el rol coincida con lo seleccionado (opcional pero recomendado)
+        if (userRole === 'TEACHER' && !isAdmin) {
+          throw new Error('No tienes permisos de docente');
+        }
+        if (userRole === 'STUDENT' && isAdmin) {
+          throw new Error('Por favor ingresa como docente');
+        }
+
         localStorage.setItem('auth', authHeader);
-        localStorage.setItem('user', JSON.stringify({ 
-          email: userEmail, 
-          role: isAdmin ? 'ADMIN' : 'STUDENT' 
+        localStorage.setItem('user', JSON.stringify({
+          email: userEmail,
+          role: isAdmin ? 'ADMIN' : 'STUDENT'
         }));
 
         navigate('/dashboard');
       }
     } catch (err) {
       console.error('Error de login:', err);
-      setError('Credenciales incorrectas o error de conexión');
+      setError(err.message === 'No tienes permisos de docente' || err.message === 'Por favor ingresa como docente'
+        ? err.message
+        : 'Credenciales incorrectas o usuario no registrado');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleBack = () => {
+    setUserRole(null);
+    setEmail('');
+    setPassword('');
+    setError('');
   };
 
   return (
@@ -53,59 +71,84 @@ const Login = () => {
       <div className="institutional-logo">
         <img src={usachLogo} alt="Logo USACH" />
       </div>
+
       <div className="login-card glass animate-fade-in">
         <div className="login-header">
           <div className="logo-badge">
             <GraduationCap size={32} color="var(--primary)" />
           </div>
-          <h1>Bienvenido</h1>
-          <p>Gestiona tu seguimiento semanal con facilidad</p>
+          <h1>{userRole === null ? 'Bienvenido' : userRole === 'STUDENT' ? 'Acceso Estudiante' : 'Acceso Docente'}</h1>
+          <p>{userRole === null ? 'Selecciona tu perfil para ingresar' : 'Ingresa tus datos para continuar'}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="input-group">
-            <label htmlFor="email">Usuario / Email</label>
-            <div className="input-wrapper">
-              <Mail className="input-icon" size={18} />
-              <input
-                id="email"
-                type="text"
-                placeholder="Ingresa tu usuario"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+        {userRole === null ? (
+          <div className="role-selection">
+            <button className="role-button glass" onClick={() => setUserRole('STUDENT')}>
+              <div className="role-icon student">
+                <GraduationCap size={28} />
+              </div>
+              <span>Soy Estudiante</span>
+            </button>
+            <button className="role-button glass" onClick={() => setUserRole('TEACHER')}>
+              <div className="role-icon teacher">
+                <Lock size={28} />
+              </div>
+              <span>Soy Docente</span>
+            </button>
           </div>
-
-          <div className="input-group">
-            <label htmlFor="password">Contraseña</label>
-            <div className="input-wrapper">
-              <Lock className="input-icon" size={18} />
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+        ) : (
+          <form onSubmit={handleSubmit} className="login-form">
+            <div className="input-group">
+              <label htmlFor="email">Correo Institucional</label>
+              <div className="input-wrapper">
+                <Mail className="input-icon" size={18} />
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="ejemplo@usach.cl"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          {error && <div className="error-message">{error}</div>}
+            {userRole === 'TEACHER' && (
+              <div className="input-group">
+                <label htmlFor="password">Contraseña</label>
+                <div className="input-wrapper">
+                  <Lock className="input-icon" size={18} />
+                  <input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+            )}
 
-          <button type="submit" className="login-button" disabled={loading}>
-            <span>{loading ? 'Cargando...' : 'Ingresar'}</span>
-            {!loading && <LogIn size={18} />}
-          </button>
-        </form>
+            {error && <div className="error-message">{error}</div>}
+
+            <div className="button-group">
+              <button type="submit" className="login-button" disabled={loading}>
+                <span>{loading ? 'Cargando...' : 'Ingresar'}</span>
+                {!loading && <LogIn size={18} />}
+              </button>
+              <button type="button" className="back-button" onClick={handleBack}>
+                Volver
+              </button>
+            </div>
+          </form>
+        )}
 
         <div className="login-footer">
-          <p>¿Problemas para acceder? Contacta a tu profesor</p>
+          <p>Plataforma de Seguimiento Semanal de PINGESO</p>
         </div>
       </div>
-      
+
       <div className="login-decoration">
         <div className="blob blob-1"></div>
         <div className="blob blob-2"></div>

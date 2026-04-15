@@ -14,8 +14,8 @@ VALUES ('INF-612', 1, 2026, 1, true);
 -- 3. Insertar un Estudiante
 -- student1.test@usach.cl, student1, test
 -- Asignado a la sección INF-612 (ID 1)
-INSERT INTO student (email, name, lastname, password, id_section)
-VALUES ('student1.test@usach.cl', 'student1', 'test', 'test', 1);
+INSERT INTO student (email, name, lastname, id_section)
+VALUES ('student1.test@usach.cl', 'student1', 'test', 1);
 
 -- 4. Insertar un Proyecto para la sección
 INSERT INTO proyect (name, id_section)

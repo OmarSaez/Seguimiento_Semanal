@@ -35,12 +35,12 @@ public class CustomUserDetailsService implements UserDetailsService {
                     .build();
         }
 
-        // Buscar en estudiantes segundo
+        // Buscar en estudiantes segundo (Sin contraseña obligatoria desde el DB)
         Optional<Student> student = studentRepository.findByEmail(email);
         if (student.isPresent()) {
             return User.builder()
                     .username(student.get().getEmail())
-                    .password("{noop}" + student.get().getPassword())
+                    .password("{noop}student_access") // Contraseña fija para simplificar el acceso
                     .roles("STUDENT")
                     .build();
         }
