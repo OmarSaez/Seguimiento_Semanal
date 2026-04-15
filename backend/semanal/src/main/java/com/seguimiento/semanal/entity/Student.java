@@ -1,6 +1,7 @@
 package com.seguimiento.semanal.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import java.util.List;
 
@@ -33,8 +34,10 @@ public class Student {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_section", nullable = false)
+    @JsonIgnoreProperties({"students", "teacher", "proyects"})
     private Section section;
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("student")
     private List<Advance> advances;
 }

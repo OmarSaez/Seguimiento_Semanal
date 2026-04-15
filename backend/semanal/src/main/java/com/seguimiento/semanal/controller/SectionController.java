@@ -20,6 +20,11 @@ public class SectionController {
         return sectionService.findAll();
     }
 
+    @GetMapping("/teacher/{email}")
+    public List<Section> getByTeacher(@PathVariable String email) {
+        return sectionService.findByTeacherEmail(email);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Section> getById(@PathVariable Long id) {
         return sectionService.findById(id)

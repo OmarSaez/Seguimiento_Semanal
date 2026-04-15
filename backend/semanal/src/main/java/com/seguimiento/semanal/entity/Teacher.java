@@ -1,6 +1,7 @@
 package com.seguimiento.semanal.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import java.util.List;
 
@@ -33,5 +34,6 @@ public class Teacher {
     private String password;
 
     @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("teacher")
     private List<Section> sections;
 }

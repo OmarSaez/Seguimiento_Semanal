@@ -16,7 +16,11 @@ public class SectionService {
     private final SectionRepository sectionRepository;
 
     public List<Section> findAll() {
-        return sectionRepository.findAll();
+        return sectionRepository.findAllByOrderByYearDescSemesterDesc();
+    }
+
+    public List<Section> findByTeacherEmail(String email) {
+        return sectionRepository.findByTeacherEmailOrderByYearDescSemesterDesc(email);
     }
 
     public Optional<Section> findById(Long id) {

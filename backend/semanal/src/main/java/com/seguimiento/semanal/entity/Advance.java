@@ -1,6 +1,7 @@
 package com.seguimiento.semanal.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,10 +26,12 @@ public class Advance {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_student", nullable = false)
+    @JsonIgnoreProperties("advances")
     private Student student;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_proyect", nullable = false)
+    @JsonIgnoreProperties("advances")
     private Proyect proyect;
 
     @Column(name = "send_date")
@@ -41,5 +44,6 @@ public class Advance {
     private String problem;
 
     @OneToMany(mappedBy = "advance", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("advance")
     private List<AdvanceDetail> details;
 }

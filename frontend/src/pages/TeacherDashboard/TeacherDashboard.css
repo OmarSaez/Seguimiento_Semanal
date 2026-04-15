@@ -1,0 +1,124 @@
+/* Teacher Dashboard & Components Styles */
+
+.dashboard-content {
+  padding: 40px 24px;
+  min-height: calc(100vh - 72px);
+}
+
+.content-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-header h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 6px;
+}
+
+.page-header p {
+  color: var(--text-muted);
+}
+
+.custom-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+}
+
+.custom-table th {
+  padding: 16px 20px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.custom-table td {
+  padding: 18px 20px;
+  color: var(--text-main);
+  font-size: 0.95rem;
+  border-bottom: 1px solid var(--glass-border);
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+.custom-table tr:last-child td {
+  border-bottom: none;
+}
+
+.custom-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.custom-table .bold {
+  font-weight: 600;
+  color: white;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.inactive {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Cell Layouts */
+.period-cell, .count-cell, .teacher-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.count-cell {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.teacher-cell span {
+  font-weight: 500;
+}
+
+.loading-state, .empty-state {
+  padding: 40px;
+  text-align: center;
+  border-radius: 16px;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .custom-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
