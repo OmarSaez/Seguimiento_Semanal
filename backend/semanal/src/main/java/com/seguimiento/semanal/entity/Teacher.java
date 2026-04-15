@@ -7,18 +7,16 @@ import java.util.List;
 
 /**
  * Entidad que representa a un profesor en el sistema.
- * El profesor actúa como administrador: tiene la capacidad de crear otras cuentas 
- * de profesores, gestionar secciones, agregar alumnos a dichas secciones 
- * y crear los proyectos de seguimiento.
  */
 @Entity
 @Table(name = "teacher")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Teacher {
+
+    public Teacher() {} // Constructor explícito
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

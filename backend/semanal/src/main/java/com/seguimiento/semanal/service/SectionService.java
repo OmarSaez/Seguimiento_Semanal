@@ -31,6 +31,14 @@ public class SectionService {
         return sectionRepository.save(section);
     }
 
+    public Section update(Long id, Section section) {
+        if (!sectionRepository.existsById(id)) {
+            throw new RuntimeException("Sección no encontrada");
+        }
+        section.setId(id);
+        return sectionRepository.save(section);
+    }
+
     public void deleteById(Long id) {
         sectionRepository.deleteById(id);
     }

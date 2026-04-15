@@ -59,7 +59,7 @@ const MySections = () => {
                     </div>
                   </td>
                   <td>
-                    {section.active ? (
+                    {section.isActive ? (
                       <span className="status-badge active">
                         <BadgeCheck size={14} /> Activo
                       </span>

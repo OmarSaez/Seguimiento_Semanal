@@ -8,17 +8,16 @@ import java.util.List;
 
 /**
  * Entidad que representa un reporte de avance semanal.
- * Es creado por un estudiante para un proyecto específico, indicando la semana,
- * los problemas encontrados y contiene el detalle de las horas y tipos de tareas realizadas.
  */
 @Entity
 @Table(name = "advance")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Advance {
+
+    public Advance() {} // Constructor explícito
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -7,17 +7,16 @@ import java.util.List;
 
 /**
  * Entidad que representa a un estudiante.
- * Un estudiante pertenece a una sección específica y es el encargado de
- * registrar sus propios avances semanales en los proyectos asignados.
  */
 @Entity
 @Table(name = "student")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Student {
+
+    public Student() {} // Constructor explícito
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

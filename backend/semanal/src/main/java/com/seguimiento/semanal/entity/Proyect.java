@@ -7,16 +7,16 @@ import java.util.List;
 
 /**
  * Entidad que representa un proyecto dentro de una sección.
- * Los proyectos son el marco sobre el cual los alumnos registran sus avances semanales.
  */
 @Entity
 @Table(name = "proyect")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Proyect {
+
+    public Proyect() {} // Constructor explícito
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

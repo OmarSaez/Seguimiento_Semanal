@@ -4,6 +4,7 @@ import Login from './pages/Login/Login';
 import TeacherDashboard from './pages/TeacherDashboard/TeacherDashboard';
 import MySections from './pages/TeacherDashboard/MySections';
 import AllSections from './pages/TeacherDashboard/AllSections';
+import ManageSection from './pages/TeacherDashboard/ManageSection';
 
 function App() {
   return (
@@ -16,8 +17,7 @@ function App() {
           <Route index element={<Navigate to="my-sections" replace />} />
           <Route path="my-sections" element={<MySections />} />
           <Route path="all-sections" element={<AllSections />} />
-          {/* Próximas vistas */}
-          <Route path="manage-section" element={<div>Próximamente: Crear/Editar Sección</div>} />
+          <Route path="manage-section" element={<ManageSection />} />
           <Route path="add-projects" element={<div>Próximamente: Ingresar Proyectos</div>} />
           <Route path="add-students" element={<div>Próximamente: Ingresar Alumnos</div>} />
           <Route path="add-teacher" element={<div>Próximamente: Ingresar Docente</div>} />

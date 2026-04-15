@@ -7,8 +7,6 @@ import java.util.List;
 
 /**
  * Entidad que representa una sección académica o curso.
- * Una sección es creada por un profesor, contiene múltiples estudiantes
- * y tiene diversos proyectos asociados para el seguimiento semanal.
  */
 @Entity
 @Table(name = "section")
@@ -16,7 +14,6 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Section {
 
     @Id

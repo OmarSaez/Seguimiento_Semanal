@@ -37,6 +37,15 @@ public class SectionController {
         return sectionService.save(section);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Section> update(@PathVariable Long id, @RequestBody Section section) {
+        try {
+            return ResponseEntity.ok(sectionService.update(id, section));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         sectionService.deleteById(id);
