@@ -1,0 +1,40 @@
+package com.seguimiento.semanal.controller;
+
+import com.seguimiento.semanal.entity.Section;
+import com.seguimiento.semanal.service.SectionService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/sections")
+@RequiredArgsConstructor
+public class SectionController {
+
+    private final SectionService sectionService;
+
+    @GetMapping
+    public List<Section> getAll() {
+        return sectionService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Section> getById(@PathVariable Long id) {
+        return sectionService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public Section create(@RequestBody Section section) {
+        return sectionService.save(section);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        sectionService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+}
