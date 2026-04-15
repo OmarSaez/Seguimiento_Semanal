@@ -47,21 +47,5 @@ public class SecurityConfig {
         return source;
     }
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        // Usuarios de prueba en memoria
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password("{noop}admin123") // {noop} para contraseñas en texto plano (solo desarrollo)
-                .roles("ADMIN")
-                .build();
-
-        UserDetails user = User.builder()
-                .username("user")
-                .password("{noop}user123")
-                .roles("USER")
-                .build();
-
-        return new InMemoryUserDetailsManager(admin, user);
-    }
+    // El CustomUserDetailsService será inyectado automáticamente por Spring
 }

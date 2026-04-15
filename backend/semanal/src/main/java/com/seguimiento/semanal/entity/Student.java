@@ -31,6 +31,9 @@ public class Student {
     @Column(nullable = false)
     private String lastname;
 
+    @Column(nullable = false)
+    private String password;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_section", nullable = false)
     private Section section;

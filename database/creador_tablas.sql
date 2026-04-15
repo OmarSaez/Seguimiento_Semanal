@@ -34,6 +34,7 @@ CREATE TABLE student (
     email VARCHAR(255) NOT NULL UNIQUE,
     name VARCHAR(255) NOT NULL,
     lastname VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
     id_section INTEGER NOT NULL,
     CONSTRAINT fk_section_student FOREIGN KEY (id_section) REFERENCES section(id)
 );
