@@ -24,7 +24,7 @@ public class Advance {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_studen", nullable = false)
+    @JoinColumn(name = "id_student", nullable = false)
     private Student student;
 
     @ManyToOne(fetch = FetchType.LAZY)
