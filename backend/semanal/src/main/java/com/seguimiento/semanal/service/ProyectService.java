@@ -28,8 +28,22 @@ public class ProyectService {
         return proyectRepository.findById(id);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public List<Proyect> findBySectionId(Long sectionId) {
+        return proyectRepository.findBySectionId(sectionId);
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     public Proyect save(Proyect proyect) {
+        return proyectRepository.save(proyect);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public Proyect update(Long id, Proyect proyect) {
+        if (!proyectRepository.existsById(id)) {
+            throw new RuntimeException("Proyecto no encontrado");
+        }
+        proyect.setId(id);
         return proyectRepository.save(proyect);
     }
 

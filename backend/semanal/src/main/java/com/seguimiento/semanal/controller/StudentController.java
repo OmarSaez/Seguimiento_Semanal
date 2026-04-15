@@ -27,9 +27,23 @@ public class StudentController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/section/{sectionId}")
+    public List<Student> getBySection(@PathVariable Long sectionId) {
+        return studentService.findBySectionId(sectionId);
+    }
+
     @PostMapping
     public Student create(@RequestBody Student student) {
         return studentService.save(student);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Student> update(@PathVariable Long id, @RequestBody Student student) {
+        try {
+            return ResponseEntity.ok(studentService.update(id, student));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")

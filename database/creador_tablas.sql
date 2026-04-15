@@ -24,6 +24,7 @@ CREATE TABLE section (
 CREATE TABLE proyect (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    code VARCHAR(50),
     id_section INTEGER NOT NULL,
     CONSTRAINT fk_section FOREIGN KEY (id_section) REFERENCES section(id)
 );

@@ -27,9 +27,23 @@ public class ProyectController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/section/{sectionId}")
+    public List<Proyect> getBySection(@PathVariable Long sectionId) {
+        return proyectService.findBySectionId(sectionId);
+    }
+
     @PostMapping
     public Proyect create(@RequestBody Proyect proyect) {
         return proyectService.save(proyect);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Proyect> update(@PathVariable Long id, @RequestBody Proyect proyect) {
+        try {
+            return ResponseEntity.ok(proyectService.update(id, proyect));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")

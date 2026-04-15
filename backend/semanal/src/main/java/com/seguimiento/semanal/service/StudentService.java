@@ -27,7 +27,19 @@ public class StudentService {
         return studentRepository.findById(id);
     }
 
+    public List<Student> findBySectionId(Long sectionId) {
+        return studentRepository.findBySectionId(sectionId);
+    }
+
     public Student save(Student student) {
+        return studentRepository.save(student);
+    }
+
+    public Student update(Long id, Student student) {
+        if (!studentRepository.existsById(id)) {
+            throw new RuntimeException("Estudiante no encontrado");
+        }
+        student.setId(id);
         return studentRepository.save(student);
     }
 

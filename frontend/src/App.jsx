@@ -5,6 +5,8 @@ import TeacherDashboard from './pages/TeacherDashboard/TeacherDashboard';
 import MySections from './pages/TeacherDashboard/MySections';
 import AllSections from './pages/TeacherDashboard/AllSections';
 import ManageSection from './pages/TeacherDashboard/ManageSection';
+import ManageProjects from './pages/TeacherDashboard/ManageProjects';
+import ManageStudents from './pages/TeacherDashboard/ManageStudents';
 
 function App() {
   return (
@@ -18,8 +20,8 @@ function App() {
           <Route path="my-sections" element={<MySections />} />
           <Route path="all-sections" element={<AllSections />} />
           <Route path="manage-section" element={<ManageSection />} />
-          <Route path="add-projects" element={<div>Próximamente: Ingresar Proyectos</div>} />
-          <Route path="add-students" element={<div>Próximamente: Ingresar Alumnos</div>} />
+          <Route path="add-projects" element={<ManageProjects />} />
+          <Route path="add-students" element={<ManageStudents />} />
           <Route path="add-teacher" element={<div>Próximamente: Ingresar Docente</div>} />
         </Route>
 

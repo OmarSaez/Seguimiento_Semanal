@@ -5,18 +5,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import java.util.List;
 
-/**
- * Entidad que representa a un profesor en el sistema.
- */
 @Entity
 @Table(name = "teacher")
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Teacher {
-
-    public Teacher() {} // Constructor explícito
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

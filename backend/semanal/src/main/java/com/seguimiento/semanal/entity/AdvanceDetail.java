@@ -1,20 +1,15 @@
 package com.seguimiento.semanal.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
-/**
- * Entidad que representa el detalle específico de un avance semanal.
- * Contiene información sobre el tipo de avance realizado, el contexto y
- * la cantidad de horas (hh) dedicadas a dicha tarea.
- */
 @Entity
 @Table(name = "advance_detail")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class AdvanceDetail {
 
     @Id
@@ -23,6 +18,7 @@ public class AdvanceDetail {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_advance", nullable = false)
+    @JsonIgnoreProperties("details")
     private Advance advance;
 
     @Column(name = "type_advance", nullable = false)

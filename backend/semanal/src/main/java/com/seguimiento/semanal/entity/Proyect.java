@@ -5,18 +5,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import java.util.List;
 
-/**
- * Entidad que representa un proyecto dentro de una sección.
- */
 @Entity
 @Table(name = "proyect")
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Proyect {
-
-    public Proyect() {} // Constructor explícito
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +19,9 @@ public class Proyect {
 
     @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false)
+    private String code;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_section", nullable = false)

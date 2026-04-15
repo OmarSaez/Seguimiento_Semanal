@@ -17,6 +17,6 @@ VALUES ('INF-612', 1, 2026, 1, true);
 INSERT INTO student (email, name, lastname, id_section)
 VALUES ('student1.test@usach.cl', 'student1', 'test', 1);
 
--- 4. Insertar un Proyecto para la sección
-INSERT INTO proyect (name, id_section)
-VALUES ('Sistema de Seguimiento Semanal', 1);
+-- 4.-- Insertar Proyectos (Asumimos ID 1 para la sección INF-612)
+INSERT INTO proyect (name, code, id_section) VALUES ('Desarrollo Backend en Spring Boot', 'P01', 1);
+INSERT INTO proyect (name, code, id_section) VALUES ('Maquetación Frontend en React', 'P02', 1);

@@ -6,18 +6,13 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Entidad que representa un reporte de avance semanal.
- */
 @Entity
 @Table(name = "advance")
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Advance {
-
-    public Advance() {} // Constructor explícito
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
