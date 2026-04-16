@@ -257,12 +257,12 @@ public class ExcelService {
         CellStyle decimalStyle = workbook.createCellStyle();
         decimalStyle.setDataFormat(workbook.createDataFormat().getFormat("0.0"));
 
-        sheet.createRow(2).createCell(0).setCellValue("Promedio Reportes:"); 
+        sheet.createRow(2).createCell(0).setCellValue("Promedio de reportes entregados:"); 
         Cell reportsCell = sheet.getRow(2).createCell(1);
         reportsCell.setCellValue(avgReports);
         reportsCell.setCellStyle(decimalStyle);
 
-        sheet.createRow(3).createCell(0).setCellValue("Promedio Retraso:"); 
+        sheet.createRow(3).createCell(0).setCellValue("Promedio de semanas de retraso:"); 
         Cell delayCell = sheet.getRow(3).createCell(1);
         delayCell.setCellValue(avgDelay);
         delayCell.setCellStyle(decimalStyle);

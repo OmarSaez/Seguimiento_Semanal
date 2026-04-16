@@ -17,7 +17,7 @@
 .page-header h2 {
   font-size: 1.8rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-main);
   margin-bottom: 6px;
 }
 
@@ -65,7 +65,7 @@
 
 .custom-table .bold {
   font-weight: 600;
-  color: white;
+  color: var(--text-main);
 }
 
 /* Status Badges */
@@ -252,10 +252,10 @@
 .form-group input, .form-group select {
   width: 100%;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
-  color: white;
+  color: var(--text-main);
 }
 
 .password-toggle {
@@ -272,7 +272,7 @@
 }
 
 .password-toggle:hover {
-  color: white;
+  color: var(--text-main);
 }
 
 /* Teacher Picker */
@@ -302,10 +302,10 @@
 .search-box input {
   width: 100%;
   padding: 12px 12px 12px 40px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
-  color: white;
+  color: var(--text-main);
 }
 
 .teacher-list {
@@ -458,7 +458,7 @@
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 20px;
-  color: white;
+  color: var(--text-main);
 }
 
 .type-selection-grid {
@@ -520,10 +520,10 @@ textarea {
   width: 100%;
   min-height: 100px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
-  color: white;
+  color: var(--text-main);
   resize: vertical;
 }
 

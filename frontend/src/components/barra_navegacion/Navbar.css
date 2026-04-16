@@ -5,6 +5,7 @@
   width: 100%;
   height: 72px;
   z-index: 100;
+  background: var(--nav-bg);
   border-bottom: 1px solid var(--glass-border);
   padding: 0 24px;
 }
@@ -40,9 +41,7 @@
 .platform-name {
   font-weight: 700;
   font-size: 1.125rem;
-  background: linear-gradient(135deg, #fff, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--nav-text);
   white-space: nowrap;
 }
 
@@ -61,21 +60,21 @@
   gap: 10px;
   padding: 10px 16px;
   border-radius: 10px;
-  color: var(--text-muted);
+  color: var(--nav-text-muted);
   font-weight: 500;
   font-size: 0.9rem;
   white-space: nowrap;
 }
 
 .nav-item:hover {
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--nav-text);
+  background: var(--nav-hover);
 }
 
 .nav-item.active {
-  color: white;
-  background: var(--primary);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  color: var(--nav-active-text);
+  background: var(--nav-active-bg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .nav-user {
@@ -94,12 +93,12 @@
 .user-name {
   font-weight: 600;
   font-size: 0.875rem;
-  color: var(--text-main);
+  color: var(--nav-text);
 }
 
 .user-role {
   font-size: 0.75rem;
-  color: var(--primary);
+  color: var(--nav-text-muted);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -137,4 +136,21 @@
   .logo-divider {
     display: none;
   }
+}
+
+.theme-toggle-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--nav-text);
+  border: 1px solid var(--glass-border);
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
 }

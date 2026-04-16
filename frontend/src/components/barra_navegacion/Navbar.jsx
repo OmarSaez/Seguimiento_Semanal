@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   Users, 
@@ -7,7 +7,9 @@ import {
   FolderPlus, 
   UserPlus, 
   ShieldPlus, 
-  LogOut 
+  LogOut,
+  Moon,
+  Sun
 } from 'lucide-react';
 import usachLogo from '../../assets/image/Usach-PB-300x300.png';
 import './Navbar.css';
@@ -15,6 +17,22 @@ import './Navbar.css';
 const Navbar = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  const [isDark, setIsDark] = useState(() => {
+    return localStorage.getItem('theme') === 'dark';
+  });
+
+  useEffect(() => {
+    if (isDark) {
+      document.body.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.body.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
+
+  const toggleTheme = () => setIsDark(!isDark);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -58,6 +76,9 @@ const Navbar = () => {
             <span className="user-name">{user.email?.split('@')[0]}</span>
             <span className="user-role">Docente</span>
           </div>
+          <button className="theme-toggle-btn" onClick={toggleTheme} title="Cambiar Tema">
+            {isDark ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
           <button className="logout-btn" onClick={handleLogout} title="Cerrar Sesión">
             <LogOut size={20} />
           </button>
