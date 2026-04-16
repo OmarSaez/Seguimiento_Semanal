@@ -1,6 +1,8 @@
 package com.seguimiento.semanal.controller;
 
 import com.seguimiento.semanal.service.ExcelService;
+import com.seguimiento.semanal.repository.SectionRepository;
+import com.seguimiento.semanal.entity.Section;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -18,13 +20,18 @@ import java.io.IOException;
 public class ExcelController {
 
     private final ExcelService excelService;
+    private final SectionRepository sectionRepository;
 
     @GetMapping("/section/{sectionId}/excel")
     public ResponseEntity<byte[]> downloadSectionExcel(@PathVariable Long sectionId) {
         try {
+            Section section = sectionRepository.findById(sectionId)
+                    .orElseThrow(() -> new RuntimeException("Sección no encontrada"));
+
             byte[] data = excelService.generateSectionExcel(sectionId);
             
-            String filename = "Reporte_Seccion_" + sectionId + ".xlsx";
+            // Format: Reporte_AvanceSemanal_SECCION_SEMESTRE-AÑO.xlsx
+            String filename = "Reporte_AvanceSemanal_" + section.getSectionCode() + "_" + section.getSemester() + "-" + section.getYear() + ".xlsx";
             
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)

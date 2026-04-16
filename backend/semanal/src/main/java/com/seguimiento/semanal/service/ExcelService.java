@@ -38,6 +38,7 @@ public class ExcelService {
             createRawDataSheet(workbook, advances);
             createProjectSummarySheet(workbook, advances, section, allStudents);
             createAnalyticsSheet(workbook, advances, section, allStudents);
+            createActivityAnalysisSheet(workbook, advances, section, allStudents);
 
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             workbook.write(outputStream);
@@ -365,5 +366,123 @@ public class ExcelService {
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         style.setAlignment(HorizontalAlignment.CENTER);
         return style;
+    }
+
+    private void createActivityAnalysisSheet(Workbook workbook, List<Advance> advances, Section section, List<Student> allStudents) {
+        Sheet sheet = workbook.createSheet("Horas por Actividad");
+        
+        List<String> ACTIVITY_TYPES = Arrays.asList(
+            "Coordinacion/Planificacion",
+            "Reuniones con cliente",
+            "Diseño/Desarrollo de Software",
+            "Instalaciones/Despliegue",
+            "Pruebas/QA",
+            "Documentacion",
+            "Entrega/Capacitacion"
+        );
+
+        int rowIdx = 0;
+        // --- TABLA 1: DESGLOSE INDIVIDUAL ---
+        Row title1 = sheet.createRow(rowIdx++);
+        title1.createCell(0).setCellValue("DESGLOSE DE HORAS POR ALUMNO Y PROYECTO");
+        title1.getCell(0).setCellStyle(createHeaderStyle(workbook));
+
+        Row header1 = sheet.createRow(rowIdx++);
+        header1.createCell(0).setCellValue("Proyecto");
+        header1.createCell(1).setCellValue("Alumno");
+        header1.getCell(0).setCellStyle(createHeaderStyle(workbook));
+        header1.getCell(1).setCellStyle(createHeaderStyle(workbook));
+        for (int i = 0; i < ACTIVITY_TYPES.size(); i++) {
+            header1.createCell(i + 2).setCellValue(ACTIVITY_TYPES.get(i));
+            header1.getCell(i + 2).setCellStyle(createHeaderStyle(workbook));
+        }
+        header1.createCell(ACTIVITY_TYPES.size() + 2).setCellValue("Total HH");
+        header1.getCell(ACTIVITY_TYPES.size() + 2).setCellStyle(createHeaderStyle(workbook));
+
+        Map<String, Map<String, List<Advance>>> projectStudentAds = advances.stream()
+                .collect(Collectors.groupingBy(
+                        a -> a.getProyect().getCode() + " - " + a.getProyect().getName(),
+                        Collectors.groupingBy(a -> a.getStudent().getEmail())
+                ));
+
+        for (Map.Entry<String, Map<String, List<Advance>>> projEntry : projectStudentAds.entrySet()) {
+            String projectName = projEntry.getKey();
+            for (Map.Entry<String, List<Advance>> studEntry : projEntry.getValue().entrySet()) {
+                String studentName = studEntry.getKey();
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(projectName);
+                row.createCell(1).setCellValue(studentName);
+                
+                Map<String, Integer> hhByType = studEntry.getValue().stream()
+                        .flatMap(a -> a.getDetails().stream())
+                        .collect(Collectors.groupingBy(AdvanceDetail::getTypeAdvance, Collectors.summingInt(d -> d.getHh() != null ? d.getHh() : 0)));
+
+                int totalHhIndividual = 0;
+                for (int i = 0; i < ACTIVITY_TYPES.size(); i++) {
+                    int hh = hhByType.getOrDefault(ACTIVITY_TYPES.get(i), 0);
+                    row.createCell(i + 2).setCellValue(hh);
+                    totalHhIndividual += hh;
+                }
+                row.createCell(ACTIVITY_TYPES.size() + 2).setCellValue(totalHhIndividual);
+            }
+        }
+
+        // ALUMNOS QUE NO HAN REPORTADO NADA Y SE IGNORA SU PROYECTO
+        Set<String> activeEmails = advances.stream().map(a -> a.getStudent().getEmail()).collect(Collectors.toSet());
+        List<String> missingEmails = allStudents.stream()
+                .filter(s -> !activeEmails.contains(s.getEmail()))
+                .map(Student::getEmail)
+                .collect(Collectors.toList());
+
+        for (String email : missingEmails) {
+            Row row = sheet.createRow(rowIdx++);
+            row.createCell(0).setCellValue("No se sabe a que grupo pertenece");
+            row.createCell(1).setCellValue(email);
+            for (int i = 0; i < ACTIVITY_TYPES.size(); i++) {
+                row.createCell(i + 2).setCellValue(0);
+            }
+            row.createCell(ACTIVITY_TYPES.size() + 2).setCellValue(0); // Total HH
+        }
+
+        rowIdx += 3;
+        
+        // --- TABLA 2: DESGLOSE GRUPAL ---
+        Row title2 = sheet.createRow(rowIdx++);
+        title2.createCell(0).setCellValue("RESUMEN DE HORAS TOTALES POR PROYECTO");
+        title2.getCell(0).setCellStyle(createHeaderStyle(workbook));
+
+        Row header2 = sheet.createRow(rowIdx++);
+        header2.createCell(0).setCellValue("Proyecto");
+        header2.getCell(0).setCellStyle(createHeaderStyle(workbook));
+        for (int i = 0; i < ACTIVITY_TYPES.size(); i++) {
+            header2.createCell(i + 1).setCellValue(ACTIVITY_TYPES.get(i));
+            header2.getCell(i + 1).setCellStyle(createHeaderStyle(workbook));
+        }
+        header2.createCell(ACTIVITY_TYPES.size() + 1).setCellValue("Total HH");
+        header2.getCell(ACTIVITY_TYPES.size() + 1).setCellStyle(createHeaderStyle(workbook));
+
+        Map<String, List<Advance>> projectAds = advances.stream()
+                .collect(Collectors.groupingBy(a -> a.getProyect().getCode() + " - " + a.getProyect().getName()));
+
+        for (Map.Entry<String, List<Advance>> projEntry : projectAds.entrySet()) {
+            Row row = sheet.createRow(rowIdx++);
+            row.createCell(0).setCellValue(projEntry.getKey());
+            
+            Map<String, Integer> hhByType = projEntry.getValue().stream()
+                    .flatMap(a -> a.getDetails().stream())
+                    .collect(Collectors.groupingBy(AdvanceDetail::getTypeAdvance, Collectors.summingInt(d -> d.getHh() != null ? d.getHh() : 0)));
+
+            int totalHhProject = 0;
+            for (int i = 0; i < ACTIVITY_TYPES.size(); i++) {
+                int hh = hhByType.getOrDefault(ACTIVITY_TYPES.get(i), 0);
+                row.createCell(i + 1).setCellValue(hh);
+                totalHhProject += hh;
+            }
+            row.createCell(ACTIVITY_TYPES.size() + 1).setCellValue(totalHhProject);
+        }
+
+        for (int i = 0; i < ACTIVITY_TYPES.size() + 3; i++) {
+            sheet.autoSizeColumn(i);
+        }
     }
 }
