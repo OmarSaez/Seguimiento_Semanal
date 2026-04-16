@@ -8,6 +8,16 @@ import ManageSection from './pages/TeacherDashboard/ManageSection';
 import ManageProjects from './pages/TeacherDashboard/ManageProjects';
 import ManageStudents from './pages/TeacherDashboard/ManageStudents';
 import ManageTeachers from './pages/TeacherDashboard/ManageTeachers';
+import StudentDashboard from './pages/StudentDashboard/StudentDashboard';
+import MisAvances from './pages/StudentDashboard/MisAvances';
+import SubirAvance from './pages/StudentDashboard/SubirAvance';
+
+const DashboardRedirect = () => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.role === 'ADMIN') return <Navigate to="/teacher" replace />;
+  if (user.role === 'STUDENT') return <Navigate to="/student" replace />;
+  return <Navigate to="/login" replace />;
+};
 
 function App() {
   return (
@@ -26,7 +36,13 @@ function App() {
           <Route path="add-teacher" element={<ManageTeachers />} />
         </Route>
 
-        <Route path="/dashboard" element={<Navigate to="/teacher" replace />} />
+        <Route path="/student" element={<StudentDashboard />}>
+          <Route index element={<Navigate to="my-advances" replace />} />
+          <Route path="my-advances" element={<MisAvances />} />
+          <Route path="upload-advance" element={<SubirAvance />} />
+        </Route>
+
+        <Route path="/dashboard" element={<DashboardRedirect />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

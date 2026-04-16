@@ -43,7 +43,7 @@ const Login = () => {
 
         localStorage.setItem('auth', authHeader);
         localStorage.setItem('user', JSON.stringify({
-          email: userEmail,
+          ...response.data,
           role: isAdmin ? 'ADMIN' : 'STUDENT'
         }));
 
