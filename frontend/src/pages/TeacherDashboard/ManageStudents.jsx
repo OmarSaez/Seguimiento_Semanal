@@ -10,7 +10,10 @@ import {
   Search,
   BookOpen,
   Mail,
-  User
+  User,
+  Upload,
+  UploadCloud,
+  FileSpreadsheet
 } from 'lucide-react';
 import './TeacherDashboard.css';
 
@@ -20,6 +23,9 @@ const ManageStudents = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [sectionSearch, setSectionSearch] = useState('');
   const [formData, setFormData] = useState({ 
     id: null, 
@@ -137,6 +143,63 @@ const ManageStudents = () => {
     }
   };
 
+  const validateAndSetFile = (file) => {
+    if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+      setUploadFile(file);
+    } else {
+      alert('Por favor, selecciona un archivo Excel válido (.xlsx o .xls)');
+      setUploadFile(null);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      validateAndSetFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      validateAndSetFile(e.target.files[0]);
+    }
+  };
+
+  const handleUploadSubmit = async (e) => {
+    e.preventDefault();
+    if (!uploadFile) return;
+
+    const formData = new FormData();
+    formData.append('file', uploadFile);
+
+    try {
+      await axios.post(`http://localhost:8080/api/v1/students/section/${selectedSection.id}/upload`, formData, {
+        headers: { 
+          'Authorization': authHeader,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      setShowUploadModal(false);
+      setUploadFile(null);
+      fetchStudents(selectedSection.id);
+      alert('Alumnos cargados exitosamente');
+    } catch (err) {
+      console.error('Error uploading file:', err);
+      alert('Error al subir el archivo Excel. Asegúrate de que los correos tengan el formato correcto.');
+    }
+  };
+
   const filteredSections = sections.filter(s => 
     s.sectionCode.toLowerCase().includes(sectionSearch.toLowerCase()) ||
     s.teacher?.name.toLowerCase().includes(sectionSearch.toLowerCase())
@@ -190,10 +253,16 @@ const ManageStudents = () => {
                 <p>Gestionando estudiantes para el periodo {selectedSection.semester}/{selectedSection.year}</p>
               </div>
             </div>
-            <button className="primary-btn" onClick={() => handleOpenModal()}>
-              <UserPlus size={18} />
-              <span>Ingresar Alumno</span>
-            </button>
+            <div className="flex-align-center gap-16">
+              <button className="secondary-btn flex-align-center gap-8" onClick={() => setShowUploadModal(true)}>
+                <Upload size={18} />
+                <span>Subir Listado</span>
+              </button>
+              <button className="primary-btn flex-align-center gap-8" onClick={() => handleOpenModal()}>
+                <UserPlus size={18} />
+                <span>Ingresar Alumno</span>
+              </button>
+            </div>
           </header>
 
           <div className="table-container">
@@ -293,6 +362,87 @@ const ManageStudents = () => {
                 </button>
                 <button type="submit" className="primary-btn">
                   {formData.id ? 'Guardar Cambios' : 'Ingresar Alumno'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showUploadModal && (
+        <div className="modal-overlay">
+          <div className="modal-content glass animate-slide-up" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h3>Subir Listado de Alumnos</h3>
+              <button className="close-btn" onClick={() => { setShowUploadModal(false); setUploadFile(null); setIsDragging(false); }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div style={{ margin: '16px 0 24px', fontSize: '0.9rem', color: 'var(--text-muted)', textAlign: 'center', lineHeight: '1.5' }}>
+              Sube un archivo Excel donde la primera columna (Columna A) contenga los correos de los alumnos. El sistema extraerá automáticamente el nombre y apellido.
+            </div>
+            <form onSubmit={handleUploadSubmit} className="modal-form">
+              <div className="form-group">
+                <div 
+                  className={`drag-drop-zone ${isDragging ? 'dragging' : ''}`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => document.getElementById('excel-upload-input').click()}
+                  style={{
+                    border: `2px dashed ${isDragging ? 'var(--primary)' : 'rgba(255, 255, 255, 0.2)'}`,
+                    borderRadius: '12px',
+                    padding: '40px 20px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    background: isDragging ? 'rgba(78, 126, 255, 0.05)' : 'rgba(255, 255, 255, 0.02)',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px'
+                  }}
+                >
+                  <input 
+                    type="file" 
+                    id="excel-upload-input"
+                    accept=".xlsx, .xls"
+                    onChange={handleFileChange}
+                    style={{ display: 'none' }}
+                  />
+                  {uploadFile ? (
+                    <>
+                      <FileSpreadsheet size={48} color="#4ade80" />
+                      <div style={{ pointerEvents: 'none' }}>
+                        <p style={{ fontWeight: '600', color: 'var(--text-light)', marginBottom: '4px' }}>Archivo seleccionado</p>
+                        <p style={{ color: 'var(--primary)', wordBreak: 'break-all' }}>{uploadFile.name}</p>
+                      </div>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', pointerEvents: 'none' }}>Haz clic o arrastra otro archivo para cambiar</p>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud size={48} color={isDragging ? 'var(--primary)' : 'var(--text-muted)'} />
+                      <p style={{ color: 'var(--text-light)', fontWeight: '500', pointerEvents: 'none', margin: '0' }}>
+                        {isDragging ? '¡Suelta el archivo aquí!' : 'Arrastra tu archivo Excel aquí'}
+                      </p>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', pointerEvents: 'none', margin: '0' }}>
+                        o haz clic para explorar en tu computadora
+                      </p>
+                      <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '12px', marginTop: '8px', pointerEvents: 'none' }}>
+                        Solo .xlsx o .xls
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="modal-footer" style={{ marginTop: '32px' }}>
+                <button type="button" className="secondary-btn" onClick={() => { setShowUploadModal(false); setUploadFile(null); setIsDragging(false); }}>
+                  Cancelar
+                </button>
+                <button type="submit" className="primary-btn" disabled={!uploadFile}>
+                  <Upload size={18} />
+                  <span>Procesar Excel</span>
                 </button>
               </div>
             </form>

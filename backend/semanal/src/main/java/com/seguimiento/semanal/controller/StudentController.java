@@ -51,4 +51,16 @@ public class StudentController {
         studentService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/section/{sectionId}/upload")
+    public ResponseEntity<String> uploadStudents(@PathVariable Long sectionId, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        try {
+            int count = studentService.uploadStudentsFromExcel(sectionId, file);
+            return ResponseEntity.ok("Se crearon " + count + " alumnos exitosamente.");
+        } catch (java.io.IOException e) {
+            return ResponseEntity.badRequest().body("Error al leer el archivo Excel: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Ocurrió un error inesperado al procesar el archivo.");
+        }
+    }
 }

@@ -46,4 +46,45 @@ public class StudentService {
     public void deleteById(Long id) {
         studentRepository.deleteById(id);
     }
+
+    public int uploadStudentsFromExcel(Long sectionId, org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
+        com.seguimiento.semanal.entity.Section section = new com.seguimiento.semanal.entity.Section();
+        section.setId(sectionId);
+
+        int count = 0;
+        try (org.apache.poi.ss.usermodel.Workbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook(file.getInputStream())) {
+            org.apache.poi.ss.usermodel.Sheet sheet = workbook.getSheetAt(0);
+            for (org.apache.poi.ss.usermodel.Row row : sheet) {
+                org.apache.poi.ss.usermodel.Cell cell = row.getCell(0, org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                String email = cell.getStringCellValue().trim();
+                
+                if (!email.toLowerCase().contains("@usach.cl")) {
+                    continue; // Skip headers or empty rows
+                }
+
+                if (studentRepository.findByEmail(email).isPresent()) {
+                    continue; // Skip already existing students
+                }
+
+                String[] parts = email.split("@")[0].split("\\.");
+                String name = parts.length > 0 ? capitalize(parts[0]) : "Desconocido";
+                String lastname = parts.length > 1 ? capitalize(parts[1]) : "Desconocido";
+
+                Student student = new Student();
+                student.setEmail(email.toLowerCase());
+                student.setName(name);
+                student.setLastname(lastname);
+                student.setSection(section);
+                
+                studentRepository.save(student);
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private String capitalize(String str) {
+        if (str == null || str.isEmpty()) return str;
+        return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
+    }
 }
