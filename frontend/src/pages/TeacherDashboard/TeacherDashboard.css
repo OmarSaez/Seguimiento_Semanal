@@ -250,10 +250,28 @@
 }
 
 .form-group input, .form-group select {
+  width: 100%;
   padding: 12px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
+  color: white;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.password-toggle:hover {
   color: white;
 }
 
@@ -412,6 +430,7 @@
 
 .input-with-icon {
   position: relative;
+  width: 100%;
 }
 
 .input-icon {
@@ -419,6 +438,7 @@
   left: 12px;
   top: 14px;
   color: var(--text-muted);
+  pointer-events: none;
 }
 
 .input-with-icon input {

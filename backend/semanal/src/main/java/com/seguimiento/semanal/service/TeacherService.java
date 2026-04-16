@@ -27,8 +27,28 @@ public class TeacherService {
         return teacherRepository.save(teacher);
     }
 
-    public void deleteById(Long id) {
+    public void deleteById(Long id, String currentEmail) {
+        // 1. Verificar si es el último docente
+        long count = teacherRepository.count();
+        if (count <= 1) {
+            throw new RuntimeException("No se puede eliminar el último docente del sistema.");
+        }
+
+        // 2. Verificar si intenta eliminarse a sí mismo
+        Optional<Teacher> teacherToDelete = teacherRepository.findById(id);
+        if (teacherToDelete.isPresent() && teacherToDelete.get().getEmail().equals(currentEmail)) {
+            throw new RuntimeException("No puedes eliminar tu propia cuenta.");
+        }
+
         teacherRepository.deleteById(id);
+    }
+
+    public Teacher update(Long id, Teacher teacher) {
+        if (!teacherRepository.existsById(id)) {
+            throw new RuntimeException("Docente no encontrado");
+        }
+        teacher.setId(id);
+        return teacherRepository.save(teacher);
     }
 
     /**

@@ -80,10 +80,29 @@ const ManageStudents = () => {
     setShowModal(true);
   };
 
+  const handleEmailChange = (e) => {
+    const email = e.target.value;
+    const newFormData = { ...formData, email };
+
+    if (email.includes('@usach.cl')) {
+      const parts = email.split('@')[0].split('.');
+      if (parts.length >= 2) {
+        // Capitalizar primera letra de cada parte
+        const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+        
+        newFormData.name = capitalize(parts[0]);
+        newFormData.lastname = capitalize(parts[1]);
+      }
+    }
+    setFormData(newFormData);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const payload = { 
-      ...formData,
+      name: formData.name,
+      lastname: formData.lastname,
+      email: formData.email,
       section: { id: selectedSection.id } 
     };
 
@@ -224,7 +243,7 @@ const ManageStudents = () => {
 
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content glass animate-fade-in">
+          <div className="modal-content glass animate-slide-up">
             <div className="modal-header">
               <h3>{formData.id ? 'Editar Alumno' : 'Nuevo Alumno'}</h3>
               <button className="close-btn" onClick={() => setShowModal(false)}>
@@ -232,8 +251,21 @@ const ManageStudents = () => {
               </button>
             </div>
             <form onSubmit={handleSubmit} className="modal-form">
-              <div className="form-group">
-                <label>Nombre</label>
+              <div className="form-group" style={{ marginTop: '16px' }}>
+                <label>Correo Institucional</label>
+                <div className="input-with-icon">
+                  <Mail size={16} className="input-icon" />
+                  <input 
+                    type="email" 
+                    value={formData.email}
+                    onChange={handleEmailChange}
+                    placeholder="ejemplo@usach.cl"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="form-group" style={{ marginTop: '16px' }}>
+                <label>Nombre (Auto-completado)</label>
                 <div className="input-with-icon">
                   <User size={16} className="input-icon" />
                   <input 
@@ -246,7 +278,7 @@ const ManageStudents = () => {
                 </div>
               </div>
               <div className="form-group" style={{ marginTop: '16px' }}>
-                <label>Apellido</label>
+                <label>Apellido (Auto-completado)</label>
                 <input 
                   type="text" 
                   value={formData.lastname}
@@ -254,19 +286,6 @@ const ManageStudents = () => {
                   placeholder="Apellido"
                   required
                 />
-              </div>
-              <div className="form-group" style={{ marginTop: '16px' }}>
-                <label>Correo Institucional</label>
-                <div className="input-with-icon">
-                  <Mail size={16} className="input-icon" />
-                  <input 
-                    type="email" 
-                    value={formData.email}
-                    onChange={e => setFormData({...formData, email: e.target.value})}
-                    placeholder="ejemplo@usach.cl"
-                    required
-                  />
-                </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary-btn" onClick={() => setShowModal(false)}>

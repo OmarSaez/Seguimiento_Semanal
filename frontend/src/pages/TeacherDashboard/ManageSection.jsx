@@ -149,7 +149,7 @@ const ManageSection = () => {
 
             {showModal && (
                 <div className="modal-overlay">
-                    <div className="modal-content glass animate-fade-in">
+                    <div className="modal-content glass animate-slide-up">
                         <div className="modal-header">
                             <h3>{formData.id ? 'Editar Sección' : 'Nueva Sección'}</h3>
                             <button className="close-btn" onClick={() => setShowModal(false)}>

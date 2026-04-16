@@ -7,6 +7,7 @@ import AllSections from './pages/TeacherDashboard/AllSections';
 import ManageSection from './pages/TeacherDashboard/ManageSection';
 import ManageProjects from './pages/TeacherDashboard/ManageProjects';
 import ManageStudents from './pages/TeacherDashboard/ManageStudents';
+import ManageTeachers from './pages/TeacherDashboard/ManageTeachers';
 
 function App() {
   return (
@@ -22,7 +23,7 @@ function App() {
           <Route path="manage-section" element={<ManageSection />} />
           <Route path="add-projects" element={<ManageProjects />} />
           <Route path="add-students" element={<ManageStudents />} />
-          <Route path="add-teacher" element={<div>Próximamente: Ingresar Docente</div>} />
+          <Route path="add-teacher" element={<ManageTeachers />} />
         </Route>
 
         <Route path="/dashboard" element={<Navigate to="/teacher" replace />} />

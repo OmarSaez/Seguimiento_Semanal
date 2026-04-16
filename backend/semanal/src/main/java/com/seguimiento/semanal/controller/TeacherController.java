@@ -32,9 +32,22 @@ public class TeacherController {
         return teacherService.save(teacher);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Teacher> update(@PathVariable Long id, @RequestBody Teacher teacher) {
+        try {
+            return ResponseEntity.ok(teacherService.update(id, teacher));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        teacherService.deleteById(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> delete(@PathVariable Long id, java.security.Principal principal) {
+        try {
+            teacherService.deleteById(id, principal.getName());
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }
