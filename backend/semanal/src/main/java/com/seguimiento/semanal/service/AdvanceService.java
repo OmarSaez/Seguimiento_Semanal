@@ -19,13 +19,25 @@ public class AdvanceService {
         return advanceRepository.findAll();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
+    public List<Advance> findByStudentId(Long studentId) {
+        return advanceRepository.findByStudentIdOrderBySendDateDesc(studentId);
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
     public Optional<Advance> findById(Long id) {
         return advanceRepository.findById(id);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
     public Advance save(Advance advance) {
+        // Asegurar que las relaciones bidireccionales estén establecidas para el cascade detalls y futureAdvances
+        if (advance.getDetails() != null) {
+            advance.getDetails().forEach(d -> d.setAdvance(advance));
+        }
+        if (advance.getFutureAdvances() != null) {
+            advance.getFutureAdvances().forEach(f -> f.setAdvance(advance));
+        }
         return advanceRepository.save(advance);
     }
 

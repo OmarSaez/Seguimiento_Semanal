@@ -17,6 +17,8 @@ CREATE TABLE section (
     year INTEGER NOT NULL,
     id_teacher INTEGER NOT NULL,
     is_active BOOLEAN,
+    start_date DATE,
+    finish_date DATE,
     CONSTRAINT fk_teacher FOREIGN KEY (id_teacher) REFERENCES teacher(id)
 );
 

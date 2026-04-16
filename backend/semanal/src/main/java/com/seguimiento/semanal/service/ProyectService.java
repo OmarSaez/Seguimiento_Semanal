@@ -18,17 +18,17 @@ public class ProyectService {
 
     private final ProyectRepository proyectRepository;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
     public List<Proyect> findAll() {
         return proyectRepository.findAll();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
     public Optional<Proyect> findById(Long id) {
         return proyectRepository.findById(id);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
     public List<Proyect> findBySectionId(Long sectionId) {
         return proyectRepository.findBySectionId(sectionId);
     }

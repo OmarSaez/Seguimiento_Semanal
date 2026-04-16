@@ -27,6 +27,11 @@ public class AdvanceController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/student/{studentId}")
+    public List<Advance> getByStudentId(@PathVariable Long studentId) {
+        return advanceService.findByStudentId(studentId);
+    }
+
     @PostMapping
     public Advance create(@RequestBody Advance advance) {
         return advanceService.save(advance);

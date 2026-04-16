@@ -15,6 +15,8 @@ const ManageSection = () => {
         semester: 1,
         year: new Date().getFullYear(),
         isActive: true,
+        startDate: '',
+        finishDate: '',
         teacher: null
     });
 
@@ -47,6 +49,8 @@ const ManageSection = () => {
                 semester: section.semester,
                 year: section.year,
                 isActive: section.isActive,
+                startDate: section.startDate || '',
+                finishDate: section.finishDate || '',
                 teacher: section.teacher
             });
         } else {
@@ -74,7 +78,9 @@ const ManageSection = () => {
             semester: formData.semester,
             year: formData.year,
             isActive: formData.isActive,
-            teacher: { id: formData.teacher.id } // Enviar solo el ID del profesor para simplificar
+            startDate: formData.startDate,
+            finishDate: formData.finishDate,
+            teacher: { id: formData.teacher.id } 
         };
 
         try {
@@ -197,6 +203,24 @@ const ManageSection = () => {
                                         />
                                         Sección Activa
                                     </label>
+                                </div>
+                                <div className="form-group">
+                                    <label>Inicio Semestre</label>
+                                    <input 
+                                        type="date" 
+                                        value={formData.startDate}
+                                        onChange={e => setFormData({...formData, startDate: e.target.value})}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Fin Semestre</label>
+                                    <input 
+                                        type="date" 
+                                        value={formData.finishDate}
+                                        onChange={e => setFormData({...formData, finishDate: e.target.value})}
+                                        required
+                                    />
                                 </div>
                             </div>
 

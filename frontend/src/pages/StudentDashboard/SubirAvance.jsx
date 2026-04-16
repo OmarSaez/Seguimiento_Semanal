@@ -5,7 +5,8 @@ import {
   CheckCircle2, 
   Clock, 
   FileText, 
-  Briefcase 
+  Briefcase,
+  Calendar
 } from 'lucide-react';
 import '../TeacherDashboard/TeacherDashboard.css';
 
@@ -32,12 +33,43 @@ const SubirAvance = () => {
   
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [currentWeek, setCurrentWeek] = useState(1);
+  const [availableWeeks, setAvailableWeeks] = useState([]); // Array of { number, label, isFuture }
 
   useEffect(() => {
     if (user.sectionId) {
       fetchProjects();
+      generateWeeksList();
     }
   }, []);
+
+  const generateWeeksList = () => {
+    if (!user.startDate) return;
+    const start = new Date(user.startDate);
+    const today = new Date();
+    const weeks = [];
+    
+    // Generar hasta 20 semanas o hasta la fecha de fin si existe
+    const maxWeeks = 20; 
+    
+    for (let i = 0; i < maxWeeks; i++) {
+      const weekStart = new Date(start);
+      weekStart.setDate(start.getDate() + (i * 7));
+      
+      const weekNumber = i + 1;
+      const isFuture = weekStart > today;
+      
+      const label = `Semana ${weekNumber} - ${weekStart.toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })}`;
+      
+      weeks.push({ number: weekNumber, label, isFuture, date: weekStart });
+      
+      // Auto-seleccionar la semana actual (la más cercana al presente que no sea futura)
+      if (!isFuture) {
+        setCurrentWeek(weekNumber);
+      }
+    }
+    setAvailableWeeks(weeks);
+  };
 
   const fetchProjects = async () => {
     try {
@@ -82,7 +114,7 @@ const SubirAvance = () => {
       student: { id: user.id },
       proyect: { id: parseInt(selectedProject) },
       sendDate: new Date().toISOString(),
-      numberWeek: 5, // Mockup de semana 5
+      numberWeek: currentWeek,
       problem: noProblem ? 'Ninguno' : (problem || 'Ninguno'),
       details: selectedDetails.map(d => ({
         typeAdvance: d.type,
@@ -124,32 +156,65 @@ const SubirAvance = () => {
 
   return (
     <div className="upload-advance animate-fade-in">
-      <header className="page-header">
-        <h2>Subir un nuevo avance</h2>
-        <p>Completa los detalles de tu trabajo semanal para el equipo docente.</p>
+      <header className="page-header flex-between">
+        <div>
+          <h2>Subir un nuevo avance</h2>
+          <p>
+            Reporte de actividades semanales • {new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+        <div className="section-badge glass">
+          Sección {user.sectionCode}
+        </div>
       </header>
 
       <form onSubmit={handleSubmit} className="advance-form glass">
-        {/* Selección de Proyecto */}
-        <section className="form-section">
-          <h3 className="section-title">
-            <Briefcase size={20} />
-            Proyecto en el que participó
-          </h3>
-          <div className="form-group">
-            <select 
-              value={selectedProject} 
-              onChange={(e) => setSelectedProject(e.target.value)}
-              className="custom-select"
-              required
-            >
-              <option value="">Selecciona un proyecto...</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-              ))}
-            </select>
-          </div>
-        </section>
+        {/* Selección de Semana y Proyecto */}
+        <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+          <section className="form-section">
+            <h3 className="section-title">
+              <Calendar size={20} />
+              Semana a reportar
+            </h3>
+            <div className="form-group">
+              <select 
+                value={currentWeek} 
+                onChange={(e) => setCurrentWeek(parseInt(e.target.value))}
+                className="custom-select"
+                required
+              >
+                {availableWeeks.filter(w => !w.isFuture).map(w => (
+                  <option key={w.number} value={w.number}>{w.label}</option>
+                ))}
+              </select>
+              {availableWeeks.filter(w => !w.isFuture).length === 0 && (
+                <p style={{ color: 'var(--error)', fontSize: '0.8rem', marginTop: '8px' }}>
+                  El semestre aún no ha comenzado.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="form-section">
+            <h3 className="section-title">
+              <Briefcase size={20} />
+              Proyecto en el que participó
+            </h3>
+            <div className="form-group">
+              <select 
+                value={selectedProject} 
+                onChange={(e) => setSelectedProject(e.target.value)}
+                className="custom-select"
+                required
+              >
+                <option value="">Selecciona un proyecto...</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
+                ))}
+              </select>
+            </div>
+          </section>
+        </div>
 
         {/* Actividades Realizadas */}
         <section className="form-section" style={{ marginTop: '32px' }}>
@@ -192,11 +257,24 @@ const SubirAvance = () => {
                     Horas humanas dedicadas
                   </label>
                   <input 
-                    type="number" 
+                    type="text" 
+                    inputMode="numeric"
                     value={detail.hh}
-                    onChange={(e) => handleDetailChange(detail.type, 'hh', e.target.value)}
+                    onChange={(e) => {
+                      // Solo permitir dígitos
+                      const val = e.target.value.replace(/\D/g, '');
+                      
+                      if (val === '') {
+                        handleDetailChange(detail.type, 'hh', '');
+                        return;
+                      }
+
+                      const num = parseInt(val);
+                      if (num <= 168) {
+                        handleDetailChange(detail.type, 'hh', num.toString());
+                      }
+                    }}
                     placeholder="Ej: 4"
-                    min="1"
                     required
                   />
                 </div>

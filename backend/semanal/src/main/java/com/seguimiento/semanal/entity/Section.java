@@ -29,13 +29,20 @@ public class Section {
     @Column(nullable = false)
     private Integer year;
 
+    @Column(name = "is_active")
+    private Boolean isActive;
+
+    @Column(name = "start_date")
+    private java.time.LocalDate startDate;
+
+    @Column(name = "finish_date")
+    private java.time.LocalDate finishDate;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_teacher", nullable = false)
     @JsonIgnoreProperties("sections")
     private Teacher teacher;
 
-    @Column(name = "is_active")
-    private Boolean isActive;
 
     @OneToMany(mappedBy = "section", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("section")

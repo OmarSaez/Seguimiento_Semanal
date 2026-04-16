@@ -8,8 +8,8 @@ VALUES ('Omar Saez', 'omar.saez@usach.cl', 'test1234');
 
 -- 2. Insertar una Sección
 -- Asignado al profesor Omar (ID 1)
-INSERT INTO section (section_code, semester, year, id_teacher, is_active)
-VALUES ('INF-612', 1, 2026, 1, true);
+INSERT INTO section (section_code, semester, year, id_teacher, is_active, start_date, finish_date)
+VALUES ('INF-612', 1, 2026, 1, true, '2026-03-30', '2026-08-14');
 
 -- 3. Insertar un Estudiante
 -- student1.test@usach.cl, student1, test
