@@ -50,7 +50,7 @@ public class ExcelService {
         Sheet sheet = workbook.createSheet("Reportes Detallados");
         String[] headers = {
             "Fecha Envío", "Alumno", "Email", "Proyecto", "Semana", 
-            "Actividad Realizada", "Contexto/Detalle", "Horas (HH)", 
+            "Actividad Realizada", "Horas (HH)", "Contexto/Detalle", 
             "Problemas Reportados", "Actividades Planeadas Futuras"
         };
 
@@ -84,8 +84,8 @@ public class ExcelService {
                 row.createCell(3).setCellValue(projectName);
                 row.createCell(4).setCellValue("Semana " + advance.getNumberWeek());
                 row.createCell(5).setCellValue(detail.getTypeAdvance());
-                row.createCell(6).setCellValue(detail.getContext());
-                row.createCell(7).setCellValue(detail.getHh() != null ? detail.getHh() : 0);
+                row.createCell(6).setCellValue(detail.getHh() != null ? detail.getHh() : 0);
+                row.createCell(7).setCellValue(detail.getContext());
                 row.createCell(8).setCellValue(problems);
                 row.createCell(9).setCellValue(futurePlanned);
             }
