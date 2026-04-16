@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, LogIn, GraduationCap } from 'lucide-react';
 import axios from 'axios';
 import usachLogo from '../../assets/image/Usach-PB-300x300.png';
+import usachColorLogo from '../../assets/image/Usach-Logotipo_Color.png';
 import './Login.css';
 
 const Login = () => {
@@ -74,8 +75,8 @@ const Login = () => {
 
       <div className="login-card glass animate-fade-in">
         <div className="login-header">
-          <div className="logo-badge">
-            <GraduationCap size={32} color="var(--primary)" />
+          <div className="logo-badge" style={{ background: 'transparent', border: 'none', width: '100%', height: 'auto', marginBottom: '24px' }}>
+            <img src={usachColorLogo} alt="Logo Color" style={{ height: '90px', width: 'auto', objectFit: 'contain' }} />
           </div>
           <h1>{userRole === null ? 'Bienvenido' : userRole === 'STUDENT' ? 'Acceso Estudiante' : 'Acceso Docente'}</h1>
           <p>{userRole === null ? 'Selecciona tu perfil para ingresar' : 'Ingresa tus datos para continuar'}</p>
