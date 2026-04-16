@@ -302,7 +302,7 @@ const SubirAvance = () => {
                 style={{
                   width: '40px',
                   height: '22px',
-                  background: noProblem ? 'var(--primary)' : 'rgba(255,255,255,0.1)',
+                  background: noProblem ? 'var(--primary)' : 'var(--border)',
                   borderRadius: '20px',
                   position: 'relative',
                   transition: 'all 0.3s ease'
@@ -316,10 +316,11 @@ const SubirAvance = () => {
                   position: 'absolute',
                   top: '3px',
                   left: noProblem ? '21px' : '3px',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                 }} />
               </div>
-              <span style={{ fontSize: '0.85rem', color: noProblem ? 'white' : 'var(--text-muted)', fontWeight: noProblem ? '600' : '400' }}>
+              <span style={{ fontSize: '0.9rem', color: noProblem ? 'var(--primary)' : 'var(--text-muted)', fontWeight: noProblem ? '600' : '400' }}>
                 No hubo problemas
               </span>
             </div>
