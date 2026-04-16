@@ -40,4 +40,8 @@ public class Advance {
     @OneToMany(mappedBy = "advance", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("advance")
     private List<AdvanceDetail> details;
+
+    @OneToMany(mappedBy = "advance", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("advance")
+    private List<AdvanceFuture> futureAdvances;
 }

@@ -60,3 +60,10 @@ CREATE TABLE advance_detail (
     hh INTEGER,
     CONSTRAINT fk_advance FOREIGN KEY (id_advance) REFERENCES advance(id)
 );
+
+CREATE TABLE advance_future (
+    id SERIAL PRIMARY KEY,
+    id_advance INTEGER NOT NULL,
+    type_advance VARCHAR(100) NOT NULL,
+    CONSTRAINT fk_advance_future FOREIGN KEY (id_advance) REFERENCES advance(id)
+);
