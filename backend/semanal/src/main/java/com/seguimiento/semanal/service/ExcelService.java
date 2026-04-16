@@ -3,6 +3,7 @@ package com.seguimiento.semanal.service;
 import com.seguimiento.semanal.entity.*;
 import com.seguimiento.semanal.repository.AdvanceRepository;
 import com.seguimiento.semanal.repository.SectionRepository;
+import com.seguimiento.semanal.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -16,7 +17,6 @@ import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +24,7 @@ public class ExcelService {
 
     private final AdvanceRepository advanceRepository;
     private final SectionRepository sectionRepository;
+    private final StudentRepository studentRepository;
 
     @PreAuthorize("hasRole('ADMIN')")
     public byte[] generateSectionExcel(Long sectionId) throws IOException {
@@ -31,11 +32,12 @@ public class ExcelService {
                 .orElseThrow(() -> new RuntimeException("Sección no encontrada"));
 
         List<Advance> advances = advanceRepository.findByProyectSectionIdOrderBySendDateDesc(sectionId);
+        List<Student> allStudents = studentRepository.findBySectionId(sectionId);
 
         try (Workbook workbook = new XSSFWorkbook()) {
             createRawDataSheet(workbook, advances);
-            createProjectSummarySheet(workbook, advances, section);
-            createAnalyticsSheet(workbook, advances, section);
+            createProjectSummarySheet(workbook, advances, section, allStudents);
+            createAnalyticsSheet(workbook, advances, section, allStudents);
 
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             workbook.write(outputStream);
@@ -51,9 +53,7 @@ public class ExcelService {
             "Problemas Reportados", "Actividades Planeadas Futuras"
         };
 
-        // Estilo de cabecera
         CellStyle headerStyle = createHeaderStyle(workbook);
-
         Row headerRow = sheet.createRow(0);
         for (int i = 0; i < headers.length; i++) {
             Cell cell = headerRow.createCell(i);
@@ -75,7 +75,6 @@ public class ExcelService {
                     .map(AdvanceFuture::getTypeAdvance)
                     .collect(Collectors.joining(", "));
 
-            // Como un avance puede tener N detalles, creamos una fila por detalle para que sea procesable
             for (AdvanceDetail detail : advance.getDetails()) {
                 Row row = sheet.createRow(rowIdx++);
                 row.createCell(0).setCellValue(sendDate);
@@ -91,12 +90,10 @@ public class ExcelService {
             }
         }
 
-        for (int i = 0; i < headers.length; i++) {
-            sheet.autoSizeColumn(i);
-        }
+        for (int i = 0; i < headers.length; i++) sheet.autoSizeColumn(i);
     }
 
-    private void createProjectSummarySheet(Workbook workbook, List<Advance> advances, Section section) {
+    private void createProjectSummarySheet(Workbook workbook, List<Advance> advances, Section section, List<Student> allStudents) {
         XSSFSheet sheet = (XSSFSheet) workbook.createSheet("Resumen por Proyecto");
         Row titleRow = sheet.createRow(0);
         Cell titleCell = titleRow.createCell(0);
@@ -114,44 +111,47 @@ public class ExcelService {
         headerRow.getCell(2).setCellStyle(createHeaderStyle(workbook));
         headerRow.getCell(3).setCellStyle(createHeaderStyle(workbook));
 
-        // Agrupar por proyecto
         Map<String, List<Advance>> projectMap = advances.stream()
                 .collect(Collectors.groupingBy(a -> a.getProyect().getName()));
 
         int rowIdx = 3;
+        long totalStudentsHandled = 0;
+        
         for (Map.Entry<String, List<Advance>> entry : projectMap.entrySet()) {
             Row row = sheet.createRow(rowIdx++);
             row.createCell(0).setCellValue(entry.getKey());
-            
             int totalHh = entry.getValue().stream()
                     .flatMap(a -> a.getDetails().stream())
                     .mapToInt(d -> d.getHh() != null ? d.getHh() : 0)
                     .sum();
-
             long studentCount = entry.getValue().stream()
                     .map(a -> a.getStudent().getId())
                     .distinct()
                     .count();
-
             row.createCell(1).setCellValue(totalHh);
             row.createCell(2).setCellValue(studentCount);
             row.createCell(3).setCellValue(entry.getValue().size());
+            totalStudentsHandled += studentCount;
         }
 
-        // --- Gráfico de Líneas HH vs SEMANA ---
-        // Generar matriz de datos (Proyectos x Semanas)
+        long totalEnrolledStudents = allStudents.size();
+        long ghostCount = totalEnrolledStudents - totalStudentsHandled;
+        if (ghostCount > 0) {
+            Row row = sheet.createRow(rowIdx++);
+            row.createCell(0).setCellValue("Alumnos sin reportes");
+            row.createCell(1).setCellValue(0);
+            row.createCell(2).setCellValue(ghostCount);
+            row.createCell(3).setCellValue(0);
+        }
+
         int maxWeek = advances.stream().mapToInt(Advance::getNumberWeek).max().orElse(1);
         List<String> projectList = new ArrayList<>(projectMap.keySet());
         
-        // Fila de cabecera para datos de gráfico (Semanas)
         int chartDataRowIdx = rowIdx + 2;
         Row chartHeaderRow = sheet.createRow(chartDataRowIdx++);
         chartHeaderRow.createCell(0).setCellValue("Proyecto / Semana");
-        for (int i = 1; i <= maxWeek; i++) {
-            chartHeaderRow.createCell(i).setCellValue("Sem " + i);
-        }
+        for (int i = 1; i <= maxWeek; i++) chartHeaderRow.createCell(i).setCellValue("Sem " + i);
 
-        // Filas de datos
         for (String projName : projectList) {
             Row row = sheet.createRow(chartDataRowIdx++);
             row.createCell(0).setCellValue(projName);
@@ -167,14 +167,11 @@ public class ExcelService {
             }
         }
 
-        // Crear el Gráfico
         XSSFDrawing drawing = sheet.createDrawingPatriarch();
         XSSFClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 5, 2, 15, 18);
-        
         XSSFChart chart = drawing.createChart(anchor);
         chart.setTitleText("HH Invertidas por Proyecto y Semana");
         chart.setTitleOverlay(false);
-
         XDDFChartLegend legend = chart.getOrAddLegend();
         legend.setPosition(LegendPosition.TOP_RIGHT);
 
@@ -191,34 +188,28 @@ public class ExcelService {
         for (int i = 0; i < projectList.size(); i++) {
             XDDFNumericalDataSource<Double> hhSource = XDDFDataSourcesFactory.fromNumericCellRange(sheet, 
                     new CellRangeAddress(rowIdx + 3 + i, rowIdx + 3 + i, 1, maxWeek));
-            
             XDDFLineChartData.Series series = (XDDFLineChartData.Series) data.addSeries(weeksSource, hhSource);
             series.setTitle(projectList.get(i), null);
             series.setSmooth(false);
             series.setMarkerStyle(MarkerStyle.CIRCLE);
         }
-
         chart.plot(data);
-
         sheet.autoSizeColumn(0);
         sheet.autoSizeColumn(1);
     }
 
-    private void createAnalyticsSheet(Workbook workbook, List<Advance> advances, Section section) {
+    private void createAnalyticsSheet(Workbook workbook, List<Advance> advances, Section section, List<Student> allStudents) {
         Sheet sheet = workbook.createSheet("Analítica y Responsabilidad");
         
-        // --- 0. RESUMEN GENERAL DE LA SECCIÓN (GLOBAL KPIs) ---
+        // --- 0. RESUMEN GENERAL (GLOBAL KPIs) ---
         Row globalHeader = sheet.createRow(0);
         globalHeader.createCell(0).setCellValue("RESUMEN GENERAL DE LA SECCIÓN");
         globalHeader.getCell(0).setCellStyle(createHeaderStyle(workbook));
         
-        // Calcular métricas globales
-        Map<String, List<Advance>> studentMap = advances.stream()
-                .collect(Collectors.groupingBy(a -> a.getStudent().getName() + " " + a.getStudent().getLastname()));
+        Map<Long, List<Advance>> studentAdvancesMap = advances.stream()
+                .collect(Collectors.groupingBy(a -> a.getStudent().getId()));
         
-        int totalStudentsInDB = section.getStudents() != null ? section.getStudents().size() : studentMap.size();
-        double avgReports = (double) advances.size() / Math.max(1, totalStudentsInDB);
-        
+        int totalEnrolled = allStudents.size();
         int currentAcademicWeek = 1;
         if (section.getStartDate() != null) {
             long days = java.time.temporal.ChronoUnit.DAYS.between(section.getStartDate(), java.time.LocalDate.now());
@@ -229,12 +220,11 @@ public class ExcelService {
         int studentsWithBatch = 0;
         List<Double> fulfillments = new ArrayList<>();
 
-        for (List<Advance> studentAds : studentMap.values()) {
-            // Retraso
+        for (Student student : allStudents) {
+            List<Advance> studentAds = studentAdvancesMap.getOrDefault(student.getId(), new ArrayList<>());
             int lastWeek = studentAds.stream().mapToInt(Advance::getNumberWeek).max().orElse(0);
             totalDelay += Math.max(0, currentAcademicWeek - 1 - lastWeek);
 
-            // Batches
             boolean hasBatch = false;
             List<Advance> sortedByDate = studentAds.stream().sorted(Comparator.comparing(Advance::getSendDate)).collect(Collectors.toList());
             for (int i = 0; i < sortedByDate.size() - 1; i++) {
@@ -244,159 +234,124 @@ public class ExcelService {
             }
             if (hasBatch) studentsWithBatch++;
 
-            // Cumplimiento
             int totalPromises = 0; int keptPromises = 0;
             List<Advance> sortedByWeek = studentAds.stream().sorted(Comparator.comparing(Advance::getNumberWeek)).collect(Collectors.toList());
             for (int i = 0; i < sortedByWeek.size() - 1; i++) {
-                Set<String> future = sortedByWeek.get(i).getFutureAdvances().stream().map(AdvanceFuture::getTypeAdvance).collect(Collectors.toSet());
-                Set<String> done = sortedByWeek.get(i + 1).getDetails().stream().map(AdvanceDetail::getTypeAdvance).collect(Collectors.toSet());
+                Set<String> future = sortedByWeek.get(i).getFutureAdvances().stream()
+                        .map(f -> f.getTypeAdvance().trim().toLowerCase()).collect(Collectors.toSet());
+                Set<String> done = sortedByWeek.get(i + 1).getDetails().stream()
+                        .map(d -> d.getTypeAdvance().trim().toLowerCase()).collect(Collectors.toSet());
                 totalPromises += future.size();
                 for (String p : future) if (done.contains(p)) keptPromises++;
             }
             if (totalPromises > 0) fulfillments.add((double) keptPromises / totalPromises);
         }
 
-        double avgDelay = (double) totalDelay / Math.max(1, totalStudentsInDB);
+        double avgReports = (double) advances.size() / Math.max(1, totalEnrolled);
+        double avgDelay = (double) totalDelay / Math.max(1, totalEnrolled);
         double avgFulfillment = fulfillments.stream().mapToDouble(d -> d).average().orElse(0.0);
-        double pctBatch = (double) studentsWithBatch / Math.max(1, totalStudentsInDB);
+        double pctBatch = (double) studentsWithBatch / Math.max(1, totalEnrolled);
 
-        Row r1 = sheet.createRow(1); r1.createCell(0).setCellValue("Total Alumnos Inscritos:"); r1.createCell(1).setCellValue(totalStudentsInDB);
-        Row r2 = sheet.createRow(2); r2.createCell(0).setCellValue("Promedio Reportes por Alumno:"); r2.createCell(1).setCellValue(avgReports);
-        Row r3 = sheet.createRow(3); r3.createCell(0).setCellValue("Promedio Retraso (Semanas):"); r3.createCell(1).setCellValue(avgDelay);
-        Row r4 = sheet.createRow(4); r4.createCell(0).setCellValue("Cumplimiento General Promedio:"); r4.createCell(1).setCellValue(avgFulfillment);
-        CellStyle pctStyleGlobal = workbook.createCellStyle(); pctStyleGlobal.setDataFormat(workbook.createDataFormat().getFormat("0.0%"));
-        r4.getCell(1).setCellStyle(pctStyleGlobal);
-        Row r5 = sheet.createRow(5); r5.createCell(0).setCellValue("% Alumnos que reportan 'De Golpe':"); r5.createCell(1).setCellValue(pctBatch);
-        r5.getCell(1).setCellStyle(pctStyleGlobal);
-
-        // Espacio
-        int rowIdx = 8;
+        sheet.createRow(1).createCell(0).setCellValue("Total Alumnos:"); sheet.getRow(1).createCell(1).setCellValue(totalEnrolled);
         
-        // --- 1. FRECUENCIA DE ENVÍO POR ALUMNO ---
+        CellStyle decimalStyle = workbook.createCellStyle();
+        decimalStyle.setDataFormat(workbook.createDataFormat().getFormat("0.0"));
+
+        sheet.createRow(2).createCell(0).setCellValue("Promedio Reportes:"); 
+        Cell reportsCell = sheet.getRow(2).createCell(1);
+        reportsCell.setCellValue(avgReports);
+        reportsCell.setCellStyle(decimalStyle);
+
+        sheet.createRow(3).createCell(0).setCellValue("Promedio Retraso:"); 
+        Cell delayCell = sheet.getRow(3).createCell(1);
+        delayCell.setCellValue(avgDelay);
+        delayCell.setCellStyle(decimalStyle);
+
+        sheet.createRow(4).createCell(0).setCellValue("Cumplimiento Promedio:"); sheet.getRow(4).createCell(1).setCellValue(avgFulfillment);
+        CellStyle pctStyleGlobal = workbook.createCellStyle(); pctStyleGlobal.setDataFormat(workbook.createDataFormat().getFormat("0.0%"));
+        sheet.getRow(4).getCell(1).setCellStyle(pctStyleGlobal);
+        sheet.createRow(5).createCell(0).setCellValue("% Reportes 'De Golpe':"); sheet.getRow(5).createCell(1).setCellValue(pctBatch);
+        sheet.getRow(5).getCell(1).setCellStyle(pctStyleGlobal);
+
+        int rowIdx = 8;
+        // --- 1. DETALLE DE FRECUENCIA ---
         Row sectionTitle1 = sheet.createRow(rowIdx++);
         sectionTitle1.createCell(0).setCellValue("DETALLE DE FRECUENCIA POR ALUMNO");
         sectionTitle1.getCell(0).setCellStyle(createHeaderStyle(workbook));
-
         Row header1 = sheet.createRow(rowIdx++);
-        header1.createCell(0).setCellValue("Alumno");
-        header1.createCell(1).setCellValue("Total Reportes");
-        header1.createCell(2).setCellValue("Semanas con Reporte");
-        header1.createCell(3).setCellValue("Reportes Enviados 'De Golpe'");
+        header1.createCell(0).setCellValue("Alumno"); header1.createCell(1).setCellValue("Total"); header1.createCell(2).setCellValue("Semanas"); header1.createCell(3).setCellValue("De Golpe");
 
-        for (Map.Entry<String, List<Advance>> entry : studentMap.entrySet()) {
-            List<Advance> studentAds = entry.getValue();
+        for (Student student : allStudents) {
+            List<Advance> studentAds = studentAdvancesMap.getOrDefault(student.getId(), new ArrayList<>());
             Row row = sheet.createRow(rowIdx++);
-            row.createCell(0).setCellValue(entry.getKey());
+            row.createCell(0).setCellValue(student.getName() + " " + student.getLastname());
             row.createCell(1).setCellValue(studentAds.size());
-            
-            String weeks = studentAds.stream()
-                    .map(a -> a.getNumberWeek().toString())
-                    .distinct()
-                    .sorted()
-                    .collect(Collectors.joining(", "));
-            row.createCell(2).setCellValue(weeks);
-
-            long batched = 0;
+            String weeks = studentAds.stream().map(a -> a.getNumberWeek().toString()).distinct().sorted().collect(Collectors.joining(", "));
+            row.createCell(2).setCellValue(weeks.isEmpty() ? "Ninguna" : weeks);
+            long batchedCount = 0;
             if (studentAds.size() > 1) {
                 List<Advance> sortedByDate = studentAds.stream().sorted(Comparator.comparing(Advance::getSendDate)).collect(Collectors.toList());
                 for (int i = 0; i < sortedByDate.size() - 1; i++) {
                     if (sortedByDate.get(i).getSendDate().plusMinutes(10).isAfter(sortedByDate.get(i+1).getSendDate())) {
-                        batched++;
+                        batchedCount++;
                     }
                 }
             }
-            row.createCell(3).setCellValue(batched > 0 ? "SÍ (" + (batched + 1) + " seguidos)" : "No");
+            row.createCell(3).setCellValue(batchedCount > 0 ? "SÍ (" + (batchedCount + 1) + " seguidos)" : "No");
         }
 
         rowIdx += 2;
-        // ... (resto de tablas de retraso y cumplimiento siguen abajo)
-        rowIdx += 2;
+        // --- 2. ANÁLISIS DE REZAGO ---
         Row sectionTitle3 = sheet.createRow(rowIdx++);
         sectionTitle3.createCell(0).setCellValue("ALUMNOS CON TRABAJO PENDIENTE (RETRASOS)");
         sectionTitle3.getCell(0).setCellStyle(createHeaderStyle(workbook));
-
         Row header3 = sheet.createRow(rowIdx++);
-        header3.createCell(0).setCellValue("Alumno / Proyecto");
-        header3.createCell(1).setCellValue("Semana Actual Académica");
-        header3.createCell(2).setCellValue("Última Semana Reportada");
-        header3.createCell(3).setCellValue("Semanas de Retraso");
+        header3.createCell(0).setCellValue("Alumno"); header3.createCell(1).setCellValue("Actual"); header3.createCell(2).setCellValue("Última"); header3.createCell(3).setCellValue("Retraso");
 
-        for (Map.Entry<String, List<Advance>> entry : studentMap.entrySet()) {
+        for (Student student : allStudents) {
+            List<Advance> studentAds = studentAdvancesMap.getOrDefault(student.getId(), new ArrayList<>());
             Row row = sheet.createRow(rowIdx++);
-            List<Advance> studentAds = entry.getValue();
             int lastWeek = studentAds.stream().mapToInt(Advance::getNumberWeek).max().orElse(0);
-            int delay = Math.max(0, currentAcademicWeek - 1 - lastWeek); // -1 porque la semana en curso aún no acaba
-
-            row.createCell(0).setCellValue(entry.getKey());
+            int delay = Math.max(0, currentAcademicWeek - 1 - lastWeek);
+            row.createCell(0).setCellValue(student.getName() + " " + student.getLastname());
             row.createCell(1).setCellValue(currentAcademicWeek);
-            row.createCell(2).setCellValue(lastWeek == 0 ? "Ninguna" : "Semana " + lastWeek);
+            row.createCell(2).setCellValue(lastWeek == 0 ? "Ninguna" : "Sem " + lastWeek);
             row.createCell(3).setCellValue(delay);
-            
-            if (delay > 1) {
-                CellStyle delayStyle = workbook.createCellStyle();
-                Font redFont = workbook.createFont();
-                redFont.setColor(IndexedColors.RED.getIndex());
-                redFont.setBold(true);
-                delayStyle.setFont(redFont);
-                row.getCell(3).setCellStyle(delayStyle);
+            if (delay >= 1) {
+                CellStyle ds = workbook.createCellStyle(); Font rf = workbook.createFont(); rf.setColor(IndexedColors.RED.getIndex()); rf.setBold(true); ds.setFont(rf);
+                row.getCell(3).setCellStyle(ds);
             }
         }
 
-        // --- 3. KPI: CUMPLIMIENTO DE COMPROMISOS ---
         rowIdx += 2;
+        // --- 3. KPI CUMPLIMIENTO ---
         Row sectionTitle2 = sheet.createRow(rowIdx++);
-        sectionTitle2.createCell(0).setCellValue("KPI: CUMPLIMIENTO (Siguiente Semana)");
+        sectionTitle2.createCell(0).setCellValue("KPI: CUMPLIMIENTO (Compromisos)");
         sectionTitle2.getCell(0).setCellStyle(createHeaderStyle(workbook));
-
         Row header2 = sheet.createRow(rowIdx++);
-        header2.createCell(0).setCellValue("Alumno");
-        header2.createCell(1).setCellValue("Compromisos");
-        header2.createCell(2).setCellValue("Cumplidos");
-        header2.createCell(3).setCellValue("% Cumplimiento");
+        header2.createCell(0).setCellValue("Alumno"); header2.createCell(1).setCellValue("Comp."); header2.createCell(2).setCellValue("Cump."); header2.createCell(3).setCellValue("%");
 
-        for (Map.Entry<String, List<Advance>> entry : studentMap.entrySet()) {
-            List<Advance> studentAdvances = entry.getValue().stream()
-                    .sorted(Comparator.comparing(Advance::getNumberWeek))
-                    .collect(Collectors.toList());
-
-            int totalPromises = 0;
-            int keptPromises = 0;
-
-            for (int i = 0; i < studentAdvances.size() - 1; i++) {
-                Advance current = studentAdvances.get(i);
-                Advance next = studentAdvances.get(i + 1);
-
-                Set<String> futurePlanned = current.getFutureAdvances().stream()
-                        .map(AdvanceFuture::getTypeAdvance)
-                        .collect(Collectors.toSet());
-
-                Set<String> nextDone = next.getDetails().stream()
-                        .map(AdvanceDetail::getTypeAdvance)
-                        .collect(Collectors.toSet());
-
-                totalPromises += futurePlanned.size();
-                for (String planned : futurePlanned) {
-                    if (nextDone.contains(planned)) {
-                        keptPromises++;
-                    }
-                }
+        for (Student student : allStudents) {
+            List<Advance> studentAds = studentAdvancesMap.getOrDefault(student.getId(), new ArrayList<>()).stream()
+                    .sorted(Comparator.comparing(Advance::getNumberWeek)).collect(Collectors.toList());
+            int totalPromises = 0; int keptPromises = 0;
+            for (int i = 0; i < studentAds.size() - 1; i++) {
+                Set<String> future = studentAds.get(i).getFutureAdvances().stream().map(f -> f.getTypeAdvance().trim().toLowerCase()).collect(Collectors.toSet());
+                Set<String> done = studentAds.get(i + 1).getDetails().stream().map(d -> d.getTypeAdvance().trim().toLowerCase()).collect(Collectors.toSet());
+                totalPromises += future.size();
+                for (String p : future) if (done.contains(p)) keptPromises++;
             }
-
             Row row = sheet.createRow(rowIdx++);
-            row.createCell(0).setCellValue(entry.getKey());
+            row.createCell(0).setCellValue(student.getName() + " " + student.getLastname());
             row.createCell(1).setCellValue(totalPromises);
             row.createCell(2).setCellValue(keptPromises);
             if (totalPromises > 0) {
                 double pct = (double) keptPromises / totalPromises;
                 row.createCell(3).setCellValue(pct);
-                CellStyle pctStyle = workbook.createCellStyle();
-                pctStyle.setDataFormat(workbook.createDataFormat().getFormat("0.0%"));
-                row.getCell(3).setCellStyle(pctStyle);
-            } else {
-                row.createCell(3).setCellValue("N/A");
-            }
+                CellStyle ps = workbook.createCellStyle(); ps.setDataFormat(workbook.createDataFormat().getFormat("0.0%"));
+                row.getCell(3).setCellStyle(ps);
+            } else row.createCell(3).setCellValue("N/A");
         }
-
         for (int i = 0; i < 4; i++) sheet.autoSizeColumn(i);
     }
 
