@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface AdvanceRepository extends JpaRepository<Advance, Long> {
     List<Advance> findByStudentIdOrderBySendDateDesc(Long studentId);
+    List<Advance> findByProyectSectionIdOrderBySendDateDesc(Long sectionId);
 }

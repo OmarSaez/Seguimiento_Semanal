@@ -1,12 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BadgeCheck, BadgeAlert, Users, Calendar } from 'lucide-react';
+import { BadgeCheck, BadgeAlert, Users, Calendar, Download } from 'lucide-react';
 
 const MySections = () => {
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const authHeader = localStorage.getItem('auth');
+
+  const handleDownloadExcel = async (section) => {
+    try {
+      const response = await axios.get(`http://localhost:8080/api/v1/reports/section/${section.id}/excel`, {
+        headers: { 'Authorization': authHeader },
+        responseType: 'blob' // Importante para manejar binarios
+      });
+
+      // Crear un link temporal para la descarga
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.setAttribute('download', `Reporte_${section.sectionCode}_${dateStr}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading excel:', error);
+      alert('Error al descargar el archivo Excel');
+    }
+  };
 
   useEffect(() => {
     const fetchSections = async () => {
@@ -46,6 +68,7 @@ const MySections = () => {
                 <th>Periodo (Sem/Año)</th>
                 <th>Estado</th>
                 <th>Total Alumnos</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -74,6 +97,16 @@ const MySections = () => {
                       <Users size={16} />
                       <span>{section.students?.length || 0}</span>
                     </div>
+                  </td>
+                  <td>
+                    <button 
+                      className="download-btn-mini" 
+                      title="Descargar Reporte Excel"
+                      onClick={() => handleDownloadExcel(section)}
+                    >
+                      <Download size={18} />
+                      <span>Excel</span>
+                    </button>
                   </td>
                 </tr>
               ))}
