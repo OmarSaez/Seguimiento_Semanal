@@ -6,7 +6,17 @@ import lombok.*;
 import java.util.List;
 
 /**
- * Entidad que representa una sección académica o curso.
+ * Entidad que representa una Sección académica o curso semestral.
+ * <p>
+ * La Sección sirve como el núcleo agrupador principal donde ocurre el seguimiento.
+ * Es administrada, creada y gestionada en su totalidad por un Docente (Teacher).
+ * Dentro de una misma sección coexisten múltiples opciones de Proyectos de desarrollo y
+ * se matricula el universo de Alumnos que cursará la asignatura.
+ * <p>
+ * Relaciones de Entidad:
+ * - Es tutelada por un único Docente (relación ManyToOne).
+ * - Agrupa y contiene múltiples Estudiantes matriculados (relación OneToMany).
+ * - Agrega y contiene las opciones de Proyectos disponibles en el semestre (relación OneToMany).
  */
 @Entity
 @Table(name = "section")

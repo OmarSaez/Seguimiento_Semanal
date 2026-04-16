@@ -18,6 +18,19 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Servicio encargado de la generación, estructuración y exportación de reportes en formato Excel (.xlsx).
+ * <p>
+ * Este servicio utiliza internamente la librería Apache POI para iterar sobre la data relacional
+ * de una Sección (Avances, Alumnos, Detalles) y construir un archivo binario dividido en múltiples hojas
+ * de cálculo. Cada hoja representa una perspectiva distinta orientada al control de gestión docente:
+ * <ul>
+ *     <li><b>Reportes Detallados:</b> Muestra el desglose cronológico y lineal de cada avance enviado.</li>
+ *     <li><b>Resumen por Proyecto:</b> Agrupa las horas humanas sumadas en los proyectos y renderiza gráficos XY interactivos.</li>
+ *     <li><b>Analítica y Responsabilidad:</b> Genera KPI críticos de cumplimiento, promedios de retraso, entregas de golpe y ratios de compromiso.</li>
+ *     <li><b>Horas por Actividad:</b> Desglosa la asignación técnica de horas de cada alumno y proyecto segmentando por tipo de tarea (Diseño, Testing, QA, etc), e identifica ausencias de reporte.</li>
+ * </ul>
+ */
 @Service
 @RequiredArgsConstructor
 public class ExcelService {
@@ -26,6 +39,11 @@ public class ExcelService {
     private final SectionRepository sectionRepository;
     private final StudentRepository studentRepository;
 
+    /**
+     * Orquesta la generación del Excel obteniendo los datos desde la BD (Sección, Alumnos y Avances)
+     * y llama de manera seriada a los sub-métodos que construyen las hojas.
+     * @return El archivo binario de Excel listo para descarga.
+     */
     @PreAuthorize("hasRole('ADMIN')")
     public byte[] generateSectionExcel(Long sectionId) throws IOException {
         Section section = sectionRepository.findById(sectionId)
@@ -46,6 +64,10 @@ public class ExcelService {
         }
     }
 
+    /**
+     * Hoja 1: Construye la tabla de reporte plano.
+     * Itera por todos los avances histórios para mostrar cada Detalle por fila (Actividad v/s HH).
+     */
     private void createRawDataSheet(Workbook workbook, List<Advance> advances) {
         Sheet sheet = workbook.createSheet("Reportes Detallados");
         String[] headers = {
@@ -94,6 +116,10 @@ public class ExcelService {
         for (int i = 0; i < headers.length; i++) sheet.autoSizeColumn(i);
     }
 
+    /**
+     * Hoja 2: Construye el resumen general englobando variables de esfuerzo a nivel grupal.
+     * Además dibuja con Apache POI un gráfico lineal para comparar la dedicación por semanas (HH).
+     */
     private void createProjectSummarySheet(Workbook workbook, List<Advance> advances, Section section, List<Student> allStudents) {
         XSSFSheet sheet = (XSSFSheet) workbook.createSheet("Resumen por Proyecto");
         Row titleRow = sheet.createRow(0);
@@ -199,6 +225,10 @@ public class ExcelService {
         sheet.autoSizeColumn(1);
     }
 
+    /**
+     * Hoja 3: Realiza análisis lógicos calculando cruces y ratios (Cumplimiento, Retrasos, Entregas en Lote).
+     * Muestra resúmenes para el profesor de aquellos alumnos en estado de riesgo o ausentes.
+     */
     private void createAnalyticsSheet(Workbook workbook, List<Advance> advances, Section section, List<Student> allStudents) {
         Sheet sheet = workbook.createSheet("Analítica y Responsabilidad");
         
@@ -356,6 +386,9 @@ public class ExcelService {
         for (int i = 0; i < 4; i++) sheet.autoSizeColumn(i);
     }
 
+    /**
+     * Utilidad que construye el estilo visual base para las celdas de encabezado principal (Gris/Azul y texto Blanco en negrita).
+     */
     private CellStyle createHeaderStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         Font font = workbook.createFont();
@@ -368,6 +401,10 @@ public class ExcelService {
         return style;
     }
 
+    /**
+     * Hoja 4: Cruza por Tipo de Tarea ("Diseño", "QA", etc.) mostrando cuantas horas 
+     * aplicó el Alumno en la matriz de su respectivo Proyecto. También segrega alumnos "sin reporte".
+     */
     private void createActivityAnalysisSheet(Workbook workbook, List<Advance> advances, Section section, List<Student> allStudents) {
         Sheet sheet = workbook.createSheet("Horas por Actividad");
         
