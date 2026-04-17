@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -25,6 +27,7 @@ public class AuthController {
     private final StudentRepository studentRepository;
 
     @GetMapping("/me")
+    @Transactional(readOnly = true)
     public Map<String, Object> getCurrentUser(Authentication authentication) {
         Map<String, Object> userDetails = new HashMap<>();
         String email = authentication.getName();
@@ -42,15 +45,21 @@ public class AuthController {
                 userDetails.put("name", t.getName());
             });
         } else if (roles.contains("ROLE_STUDENT")) {
-            Optional<Student> student = studentRepository.findByEmail(email);
-            student.ifPresent(s -> {
-                userDetails.put("id", s.getId());
-                userDetails.put("name", s.getName() + " " + s.getLastname());
-                userDetails.put("sectionId", s.getSection().getId());
-                userDetails.put("sectionCode", s.getSection().getSectionCode());
-                userDetails.put("startDate", s.getSection().getStartDate());
-                userDetails.put("finishDate", s.getSection().getFinishDate());
-            });
+            List<Student> students = studentRepository.findByEmail(email);
+            if (!students.isEmpty()) {
+                // Si el alumno repitió y tiene múltiples secciones, tomamos la activa para su dashboard
+                Student activeStudent = students.stream()
+                        .filter(s -> s.getSection() != null && Boolean.TRUE.equals(s.getSection().getIsActive()))
+                        .findFirst()
+                        .orElse(students.get(0));
+
+                userDetails.put("id", activeStudent.getId());
+                userDetails.put("name", activeStudent.getName() + " " + activeStudent.getLastname());
+                userDetails.put("sectionId", activeStudent.getSection().getId());
+                userDetails.put("sectionCode", activeStudent.getSection().getSectionCode());
+                userDetails.put("startDate", activeStudent.getSection().getStartDate());
+                userDetails.put("finishDate", activeStudent.getSection().getFinishDate());
+            }
         }
 
         return userDetails;

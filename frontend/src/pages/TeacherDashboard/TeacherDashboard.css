@@ -103,6 +103,20 @@
   font-weight: 600;
 }
 
+.count-cell.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.05);
+  display: inline-flex;
+}
+
+.count-cell.clickable:hover {
+  background: rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
+}
+
 .teacher-cell span {
   font-weight: 500;
 }
@@ -232,6 +246,53 @@
   gap: 20px;
 }
 
+/* Modal Body lists */
+.student-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.student-item.list-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.student-avatar {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.student-info-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.student-info-modal .bold {
+  font-size: 1rem;
+  color: var(--text-main);
+}
+
+.student-info-modal .text-sm {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
@@ -242,6 +303,54 @@
   grid-column: span 2;
   flex-direction: row;
   align-items: center;
+}
+
+/* Custom Switch Toggle */
+.custom-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+  margin-right: 12px;
+}
+
+.custom-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.custom-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(239, 68, 68, 0.4); /* Inactivo oscuro */
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.custom-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.custom-switch input:checked + .slider {
+  background-color: var(--success); /* Activo verde */
+}
+
+.custom-switch input:checked + .slider:before {
+  transform: translateX(24px);
 }
 
 .form-group label {

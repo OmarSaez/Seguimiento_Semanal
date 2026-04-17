@@ -34,7 +34,7 @@ CREATE TABLE proyect (
 -- Tabla: student
 CREATE TABLE student (
     id SERIAL PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     lastname VARCHAR(255) NOT NULL,
     id_section INTEGER NOT NULL,

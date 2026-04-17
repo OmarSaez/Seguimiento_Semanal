@@ -10,7 +10,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
+import java.util.List;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -24,6 +26,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         // Buscar en profesores primero
         Optional<Teacher> teacher = teacherRepository.findByEmail(email);
@@ -35,11 +38,18 @@ public class CustomUserDetailsService implements UserDetailsService {
                     .build();
         }
 
-        // Buscar en estudiantes segundo (Sin contraseña obligatoria desde el DB)
-        Optional<Student> student = studentRepository.findByEmail(email);
-        if (student.isPresent()) {
+        // Buscar en estudiantes segundo (Soporta múltiples registros para alumnos repitentes)
+        List<Student> students = studentRepository.findByEmail(email);
+        if (!students.isEmpty()) {
+            boolean hasActiveSection = students.stream()
+                    .anyMatch(s -> s.getSection() != null && Boolean.TRUE.equals(s.getSection().getIsActive()));
+            
+            if (!hasActiveSection) {
+                throw new UsernameNotFoundException("El alumno está registrado, pero el acceso está bloqueado porque todas sus secciones están interactivas/cerradas.");
+            }
+
             return User.builder()
-                    .username(student.get().getEmail())
+                    .username(email)
                     .password("{noop}student_access") // Contraseña fija para simplificar el acceso
                     .roles("STUDENT")
                     .build();

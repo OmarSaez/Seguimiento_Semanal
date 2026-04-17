@@ -62,8 +62,9 @@ public class StudentService {
                     continue; // Skip headers or empty rows
                 }
 
-                if (studentRepository.findByEmail(email).isPresent()) {
-                    continue; // Skip already existing students
+                if (studentRepository.findByEmail(email).stream()
+                        .anyMatch(s -> s.getSection() != null && s.getSection().getId().equals(sectionId))) {
+                    continue; // Skip if already registered in THIS exact section
                 }
 
                 String[] parts = email.split("@")[0].split("\\.");

@@ -80,7 +80,7 @@ const ManageSection = () => {
             isActive: formData.isActive,
             startDate: formData.startDate,
             finishDate: formData.finishDate,
-            teacher: { id: formData.teacher.id } 
+            teacher: { id: formData.teacher.id }
         };
 
         try {
@@ -101,7 +101,7 @@ const ManageSection = () => {
         }
     };
 
-    const filteredTeachers = teachers.filter(t => 
+    const filteredTeachers = teachers.filter(t =>
         t.name.toLowerCase().includes(teacherSearch.toLowerCase()) ||
         t.email.toLowerCase().includes(teacherSearch.toLowerCase())
     );
@@ -167,19 +167,19 @@ const ManageSection = () => {
                             <div className="form-grid">
                                 <div className="form-group">
                                     <label>Código de Sección</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         placeholder="Ej: INF-612"
                                         value={formData.sectionCode}
-                                        onChange={e => setFormData({...formData, sectionCode: e.target.value})}
+                                        onChange={e => setFormData({ ...formData, sectionCode: e.target.value })}
                                         required
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label>Semestre</label>
-                                    <select 
+                                    <select
                                         value={formData.semester}
-                                        onChange={e => setFormData({...formData, semester: parseInt(e.target.value)})}
+                                        onChange={e => setFormData({ ...formData, semester: parseInt(e.target.value) })}
                                     >
                                         <option value={1}>1</option>
                                         <option value={2}>2</option>
@@ -187,38 +187,44 @@ const ManageSection = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Año</label>
-                                    <input 
-                                        type="number" 
+                                    <input
+                                        type="number"
                                         value={formData.year}
-                                        onChange={e => setFormData({...formData, year: parseInt(e.target.value)})}
+                                        onChange={e => setFormData({ ...formData, year: parseInt(e.target.value) })}
                                         required
                                     />
                                 </div>
-                                <div className="form-group checkbox">
-                                    <label>
-                                        <input 
-                                            type="checkbox" 
+                                <div className="form-group checkbox" style={{ display: 'flex', alignItems: 'center' }}>
+                                    <label className="custom-switch">
+                                        <input
+                                            type="checkbox"
                                             checked={formData.isActive}
-                                            onChange={e => setFormData({...formData, isActive: e.target.checked})}
+                                            onChange={e => setFormData({ ...formData, isActive: e.target.checked })}
                                         />
-                                        Sección Activa
+                                        <span className="slider"></span>
                                     </label>
+                                    <span style={{
+                                        fontWeight: '600',
+                                        color: formData.isActive ? 'var(--success)' : 'var(--error)'
+                                    }}>
+                                        {formData.isActive ? 'Sección Activa' : 'Sección Inactiva'}
+                                    </span>
                                 </div>
                                 <div className="form-group">
                                     <label>Inicio Semestre</label>
-                                    <input 
-                                        type="date" 
+                                    <input
+                                        type="date"
                                         value={formData.startDate}
-                                        onChange={e => setFormData({...formData, startDate: e.target.value})}
+                                        onChange={e => setFormData({ ...formData, startDate: e.target.value })}
                                         required
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label>Fin Semestre</label>
-                                    <input 
-                                        type="date" 
+                                    <input
+                                        type="date"
                                         value={formData.finishDate}
-                                        onChange={e => setFormData({...formData, finishDate: e.target.value})}
+                                        onChange={e => setFormData({ ...formData, finishDate: e.target.value })}
                                         required
                                     />
                                 </div>
@@ -228,8 +234,8 @@ const ManageSection = () => {
                                 <label>Asignar Docente</label>
                                 <div className="search-box">
                                     <Search className="search-icon" size={16} />
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         placeholder="Buscar docente por nombre o correo..."
                                         value={teacherSearch}
                                         onChange={e => setTeacherSearch(e.target.value)}
@@ -237,10 +243,10 @@ const ManageSection = () => {
                                 </div>
                                 <div className="teacher-list">
                                     {filteredTeachers.map(t => (
-                                        <div 
-                                            key={t.id} 
+                                        <div
+                                            key={t.id}
                                             className={`teacher-item ${formData.teacher?.id === t.id ? 'selected' : ''}`}
-                                            onClick={() => setFormData({...formData, teacher: t})}
+                                            onClick={() => setFormData({ ...formData, teacher: t })}
                                         >
                                             <div className="teacher-avatar">
                                                 <UserCircle2 size={24} />
