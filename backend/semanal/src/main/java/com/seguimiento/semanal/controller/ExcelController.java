@@ -41,4 +41,17 @@ public class ExcelController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    @GetMapping("/teacher/excel-zip")
+    public ResponseEntity<byte[]> downloadAllSectionsZip(java.security.Principal principal) {
+        try {
+            byte[] data = excelService.generateAllSectionsZip(principal.getName());
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=TodasSecciones.zip")
+                    .contentType(MediaType.parseMediaType("application/zip"))
+                    .body(data);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

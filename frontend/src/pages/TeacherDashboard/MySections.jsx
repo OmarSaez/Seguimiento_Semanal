@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BadgeCheck, BadgeAlert, Users, Calendar, Download, X, Mail, User } from 'lucide-react';
+import { BadgeCheck, BadgeAlert, Users, Calendar, Download, X, Mail, User, Archive } from 'lucide-react';
+import './TeacherDashboard.css';
 
 const MySections = () => {
   const [sections, setSections] = useState([]);
@@ -30,6 +31,26 @@ const MySections = () => {
     }
   };
 
+  const handleDownloadAllZip = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8080/api/v1/reports/teacher/excel-zip`, {
+        headers: { 'Authorization': authHeader },
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const docName = user.name ? user.name.replace(/\s+/g, '') : "Docente";
+      link.setAttribute('download', `${docName}_MiSecciones_PINGESO.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading zip:', error);
+      alert('Error al empaquetar el archivo ZIP de las secciones');
+    }
+  };
+
   useEffect(() => {
     const fetchSections = async () => {
       try {
@@ -52,9 +73,17 @@ const MySections = () => {
 
   return (
     <div className="sections-container">
-      <header className="page-header">
-        <h2>Mis Secciones</h2>
-        <p>Listado de cursos a tu cargo para este periodo.</p>
+      <header className="page-header flex-between">
+        <div>
+          <h2>Mis Secciones</h2>
+          <p>Listado de cursos a tu cargo.</p>
+        </div>
+        {sections.length > 0 && (
+          <button className="primary-btn" onClick={handleDownloadAllZip} title="Empaquetar ambas secciones activas e inactivas en un '.zip'">
+            <Archive size={18} />
+            <span>Descargar todos los excel</span>
+          </button>
+        )}
       </header>
 
       <div className="sections-grid">
@@ -93,7 +122,7 @@ const MySections = () => {
                     )}
                   </td>
                   <td>
-                    <div 
+                    <div
                       className="count-cell clickable"
                       onClick={() => setSelectedSection(section)}
                       title="Ver lista de alumnos"
@@ -103,8 +132,8 @@ const MySections = () => {
                     </div>
                   </td>
                   <td>
-                    <button 
-                      className="download-btn-mini" 
+                    <button
+                      className="download-btn-mini"
                       title="Descargar Reporte Excel"
                       onClick={() => handleDownloadExcel(section)}
                     >
@@ -135,11 +164,11 @@ const MySections = () => {
                   {selectedSection.students.map((student, idx) => (
                     <div key={student.id || idx} className="student-item list-card glass">
                       <div className="student-avatar">
-                         <User size={20} />
+                        <User size={20} />
                       </div>
                       <div className="student-info-modal">
                         <span className="bold">{student.name} {student.lastname}</span>
-                        <span className="text-sm"><Mail size={12}/> {student.email}</span>
+                        <span className="text-sm"><Mail size={12} /> {student.email}</span>
                       </div>
                     </div>
                   ))}

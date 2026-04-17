@@ -81,12 +81,7 @@ const ManageSection = () => {
             isActive: formData.isActive,
             startDate: formData.startDate === '' ? null : formData.startDate,
             finishDate: formData.finishDate === '' ? null : formData.finishDate,
-            teacher: {
-                id: formData.teacher.id,
-                name: formData.teacher.name,
-                email: formData.teacher.email,
-                password: formData.teacher.password || 'password_dummy'
-            }
+            teacher: formData.teacher ? { id: formData.teacher.id } : null
         };
 
         try {
