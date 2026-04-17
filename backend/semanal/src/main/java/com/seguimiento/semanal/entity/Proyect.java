@@ -40,7 +40,7 @@ public class Proyect {
     @JsonIgnoreProperties({"proyects", "students", "teacher"})
     private Section section;
 
-    @OneToMany(mappedBy = "proyect", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "proyect", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("proyect")
     private List<Advance> advances;
 }

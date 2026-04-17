@@ -36,7 +36,7 @@ public class Teacher {
     @Column(nullable = false)
     private String password;
 
-    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "teacher", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     @JsonIgnoreProperties("teacher")
     private List<Section> sections;
 }

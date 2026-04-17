@@ -49,16 +49,16 @@ public class Section {
     private java.time.LocalDate finishDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_teacher", nullable = false)
+    @JoinColumn(name = "id_teacher")
     @JsonIgnoreProperties("sections")
     private Teacher teacher;
 
 
-    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("section")
     private List<Proyect> proyects;
 
-    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("section")
     private List<Student> students;
 }

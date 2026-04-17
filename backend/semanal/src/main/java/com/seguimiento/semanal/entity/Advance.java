@@ -51,11 +51,11 @@ public class Advance {
     @Column(columnDefinition = "TEXT")
     private String problem;
 
-    @OneToMany(mappedBy = "advance", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "advance", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("advance")
     private List<AdvanceDetail> details;
 
-    @OneToMany(mappedBy = "advance", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "advance", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("advance")
     private List<AdvanceFuture> futureAdvances;
 }

@@ -15,11 +15,11 @@ CREATE TABLE section (
     section_code VARCHAR(255) NOT NULL,
     semester INTEGER NOT NULL,
     year INTEGER NOT NULL,
-    id_teacher INTEGER NOT NULL,
+    id_teacher INTEGER,
     is_active BOOLEAN,
     start_date DATE,
     finish_date DATE,
-    CONSTRAINT fk_teacher FOREIGN KEY (id_teacher) REFERENCES teacher(id)
+    CONSTRAINT fk_teacher FOREIGN KEY (id_teacher) REFERENCES teacher(id) ON DELETE SET NULL
 );
 
 -- Tabla: proyect
@@ -28,7 +28,7 @@ CREATE TABLE proyect (
     name VARCHAR(255) NOT NULL,
     code VARCHAR(50),
     id_section INTEGER NOT NULL,
-    CONSTRAINT fk_section FOREIGN KEY (id_section) REFERENCES section(id)
+    CONSTRAINT fk_section FOREIGN KEY (id_section) REFERENCES section(id) ON DELETE CASCADE
 );
 
 -- Tabla: student
@@ -38,7 +38,7 @@ CREATE TABLE student (
     name VARCHAR(255) NOT NULL,
     lastname VARCHAR(255) NOT NULL,
     id_section INTEGER NOT NULL,
-    CONSTRAINT fk_section_student FOREIGN KEY (id_section) REFERENCES section(id)
+    CONSTRAINT fk_section_student FOREIGN KEY (id_section) REFERENCES section(id) ON DELETE CASCADE
 );
 
 -- Tabla: advance
@@ -49,8 +49,8 @@ CREATE TABLE advance (
     send_date TIMESTAMP,
     number_week INTEGER,
     problem TEXT,
-    CONSTRAINT fk_student FOREIGN KEY (id_student) REFERENCES student(id),
-    CONSTRAINT fk_proyect FOREIGN KEY (id_proyect) REFERENCES proyect(id)
+    CONSTRAINT fk_student FOREIGN KEY (id_student) REFERENCES student(id) ON DELETE CASCADE,
+    CONSTRAINT fk_proyect FOREIGN KEY (id_proyect) REFERENCES proyect(id) ON DELETE CASCADE
 );
 
 -- Tabla: advance_detail
@@ -60,12 +60,12 @@ CREATE TABLE advance_detail (
     type_advance VARCHAR(255) NOT NULL,
     context TEXT,
     hh INTEGER,
-    CONSTRAINT fk_advance FOREIGN KEY (id_advance) REFERENCES advance(id)
+    CONSTRAINT fk_advance FOREIGN KEY (id_advance) REFERENCES advance(id) ON DELETE CASCADE
 );
 
 CREATE TABLE advance_future (
     id SERIAL PRIMARY KEY,
     id_advance INTEGER NOT NULL,
     type_advance VARCHAR(100) NOT NULL,
-    CONSTRAINT fk_advance_future FOREIGN KEY (id_advance) REFERENCES advance(id)
+    CONSTRAINT fk_advance_future FOREIGN KEY (id_advance) REFERENCES advance(id) ON DELETE CASCADE
 );

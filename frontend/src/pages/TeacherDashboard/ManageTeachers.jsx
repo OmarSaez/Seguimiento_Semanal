@@ -8,9 +8,11 @@ import {
   Mail, 
   User, 
   Key,
-  ShieldCheck,
   Eye,
-  EyeOff
+  EyeOff,
+  BookOpen,
+  Calendar,
+  Users
 } from 'lucide-react';
 import './TeacherDashboard.css';
 
@@ -18,6 +20,8 @@ const ManageTeachers = () => {
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [selectedTeacherSections, setSelectedTeacherSections] = useState(null);
+  const [selectedSection, setSelectedSection] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ 
     id: null, 
@@ -136,7 +140,7 @@ const ManageTeachers = () => {
             <tr>
               <th>Nombre Completo</th>
               <th>Correo Institucional</th>
-              <th>Rol</th>
+              <th>Secciones a Cargo</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -146,9 +150,14 @@ const ManageTeachers = () => {
                 <td className="bold">{t.name}</td>
                 <td>{t.email}</td>
                 <td>
-                  <span className="status-badge active" style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)' }}>
-                    <ShieldCheck size={14} /> Admin
-                  </span>
+                  <div 
+                    className="count-cell clickable"
+                    onClick={() => setSelectedTeacherSections(t)}
+                    title="Ver secciones asignadas"
+                  >
+                    <BookOpen size={16} />
+                    <span>{t.sections?.length || 0}</span>
+                  </div>
                 </td>
                 <td>
                   <div className="flex gap-8">
@@ -233,6 +242,88 @@ const ManageTeachers = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Lista de Secciones a Cargo */}
+      {selectedTeacherSections && (
+        <div className="modal-overlay" onClick={() => setSelectedTeacherSections(null)}>
+          <div className="modal-content animate-scale" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Secciones de: {selectedTeacherSections.name}</h3>
+              <button className="close-btn icon-btn" onClick={() => setSelectedTeacherSections(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-body" style={{ padding: '24px', maxHeight: '500px', overflowY: 'auto' }}>
+              {selectedTeacherSections.sections && selectedTeacherSections.sections.length > 0 ? (
+                <div className="student-list">
+                  {selectedTeacherSections.sections.map((sec, idx) => (
+                    <div key={sec.id || idx} className="student-item list-card glass" style={{ padding: '16px 20px' }}>
+                      <div className="student-avatar" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)' }}>
+                         <BookOpen size={20} />
+                      </div>
+                      <div className="student-info-modal">
+                        <span className="bold" style={{ fontSize: '1.05rem' }}>Código: {sec.sectionCode}</span>
+                        <span className="text-sm">
+                          <Calendar size={14}/> Semestre: {sec.semester}/{sec.year}
+                        </span>
+                      </div>
+                      <div 
+                        className="count-cell clickable" 
+                        onClick={() => setSelectedSection(sec)} 
+                        title="Ver lista de alumnos" 
+                        style={{ marginLeft: 'auto', marginRight: '16px' }}
+                      >
+                         <Users size={16} />
+                         <span>{sec.students?.length || 0}</span>
+                      </div>
+                      <div>
+                         <span className={`status-badge ${sec.isActive ? 'active' : 'inactive'}`}>
+                           {sec.isActive ? 'Activa' : 'Inactiva'}
+                         </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state glass">Este docente no tiene secciones asignadas actualmente.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sub-Modal Lista Alumnos */}
+      {selectedSection && (
+        <div className="modal-overlay" style={{ zIndex: 1050 }} onClick={() => setSelectedSection(null)}>
+          <div className="modal-content animate-scale" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Alumnos: {selectedSection.sectionCode}</h3>
+              <button className="close-btn icon-btn" onClick={() => setSelectedSection(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-body" style={{ padding: '24px', maxHeight: '500px', overflowY: 'auto' }}>
+              {selectedSection.students && selectedSection.students.length > 0 ? (
+                <div className="student-list">
+                  {selectedSection.students.map((student, idx) => (
+                    <div key={student.id || idx} className="student-item list-card glass">
+                      <div className="student-avatar">
+                         <User size={20} />
+                      </div>
+                      <div className="student-info-modal">
+                        <span className="bold">{student.name} {student.lastname}</span>
+                        <span className="text-sm"><Mail size={12}/> {student.email}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state glass">No hay alumnos matriculados en esta sección.</div>
+              )}
+            </div>
           </div>
         </div>
       )}

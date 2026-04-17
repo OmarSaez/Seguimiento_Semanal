@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
@@ -27,6 +29,7 @@ public class TeacherService {
         return teacherRepository.save(teacher);
     }
 
+    @Transactional
     public void deleteById(Long id, String currentEmail) {
         // 1. Verificar si es el último docente
         long count = teacherRepository.count();
@@ -36,11 +39,20 @@ public class TeacherService {
 
         // 2. Verificar si intenta eliminarse a sí mismo
         Optional<Teacher> teacherToDelete = teacherRepository.findById(id);
-        if (teacherToDelete.isPresent() && teacherToDelete.get().getEmail().equals(currentEmail)) {
+        Teacher teacher = teacherToDelete.get();
+        if (teacher.getEmail().equals(currentEmail)) {
             throw new RuntimeException("No puedes eliminar tu propia cuenta.");
         }
 
-        teacherRepository.deleteById(id);
+        // Historial: Desvincular e inactivar sus secciones para preservar datos (ON DELETE SET NULL)
+        if (teacher.getSections() != null) {
+            for (com.seguimiento.semanal.entity.Section s : teacher.getSections()) {
+                s.setTeacher(null);
+                s.setIsActive(false); // Inactivar la sección forzosamente porque perdió su docente
+            }
+        }
+
+        teacherRepository.delete(teacher);
     }
 
     public Teacher update(Long id, Teacher teacher) {
