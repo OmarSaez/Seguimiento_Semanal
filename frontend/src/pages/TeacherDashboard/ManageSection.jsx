@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { PlusCircle, Pencil, Search, X, CheckCircle2, UserCircle2 } from 'lucide-react';
+import { PlusCircle, Pencil, Search, X, CheckCircle2, UserCircle2, ChevronUp, ChevronDown } from 'lucide-react';
 import './TeacherDashboard.css';
 
 const ManageSection = () => {
@@ -19,6 +19,7 @@ const ManageSection = () => {
         finishDate: '',
         teacher: null
     });
+    const [scrollState, setScrollState] = useState({ top: false, bottom: true });
 
     const authHeader = localStorage.getItem('auth');
 
@@ -111,6 +112,29 @@ const ManageSection = () => {
         t.email.toLowerCase().includes(teacherSearch.toLowerCase())
     );
 
+    useEffect(() => {
+        if (!showModal) return;
+        const el = document.getElementById('teacher-list-scroll');
+        if (el) {
+            setScrollState(prev => {
+                const isTop = el.scrollTop > 0;
+                const isBottom = el.scrollHeight > el.clientHeight && Math.ceil(el.scrollTop + el.clientHeight) < el.scrollHeight;
+                if (prev.top === isTop && prev.bottom === isBottom) return prev;
+                return { top: isTop, bottom: isBottom };
+            });
+        }
+    }, [teacherSearch, teachers.length, showModal]);
+
+    const handleScroll = (e) => {
+        const el = e.target;
+        setScrollState(prev => {
+            const isTop = el.scrollTop > 0;
+            const isBottom = el.scrollHeight > el.clientHeight && Math.ceil(el.scrollTop + el.clientHeight) < el.scrollHeight;
+            if (prev.top === isTop && prev.bottom === isBottom) return prev;
+            return { top: isTop, bottom: isBottom };
+        });
+    };
+
     if (loading) return <div className="loading-state">Cargando gestión de secciones...</div>;
 
     return (
@@ -142,7 +166,13 @@ const ManageSection = () => {
                             <tr key={s.id}>
                                 <td className="bold">{s.sectionCode}</td>
                                 <td>{s.semester}/{s.year}</td>
-                                <td>{s.teacher?.name}</td>
+                                <td>
+                                    {s.teacher?.name ? (
+                                        s.teacher.name
+                                    ) : (
+                                        <span className="text-muted" style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>No asignado</span>
+                                    )}
+                                </td>
                                 <td>
                                     <span className={`status-dot ${s.isActive ? 'active' : 'inactive'}`}></span>
                                     {s.isActive ? 'Activo' : 'Inactivo'}
@@ -180,6 +210,25 @@ const ManageSection = () => {
                                         required
                                     />
                                 </div>
+                                <div className="form-group" style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <label>Estado de Accesibilidad</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
+                                        <label className="custom-switch">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.isActive}
+                                                onChange={e => setFormData({ ...formData, isActive: e.target.checked })}
+                                            />
+                                            <span className="slider"></span>
+                                        </label>
+                                        <span style={{
+                                            fontWeight: '600',
+                                            color: formData.isActive ? 'var(--success)' : 'var(--error)'
+                                        }}>
+                                            {formData.isActive ? 'Sección Activa' : 'Sección Inactiva'}
+                                        </span>
+                                    </div>
+                                </div>
                                 <div className="form-group">
                                     <label>Semestre</label>
                                     <select
@@ -198,22 +247,6 @@ const ManageSection = () => {
                                         onChange={e => setFormData({ ...formData, year: parseInt(e.target.value) })}
                                         required
                                     />
-                                </div>
-                                <div className="form-group checkbox" style={{ display: 'flex', alignItems: 'center' }}>
-                                    <label className="custom-switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.isActive}
-                                            onChange={e => setFormData({ ...formData, isActive: e.target.checked })}
-                                        />
-                                        <span className="slider"></span>
-                                    </label>
-                                    <span style={{
-                                        fontWeight: '600',
-                                        color: formData.isActive ? 'var(--success)' : 'var(--error)'
-                                    }}>
-                                        {formData.isActive ? 'Sección Activa' : 'Sección Inactiva'}
-                                    </span>
                                 </div>
                                 <div className="form-group">
                                     <label>Inicio Semestre</label>
@@ -246,25 +279,42 @@ const ManageSection = () => {
                                         onChange={e => setTeacherSearch(e.target.value)}
                                     />
                                 </div>
-                                <div className="teacher-list">
-                                    {filteredTeachers.map(t => (
-                                        <div
-                                            key={t.id}
-                                            className={`teacher-item ${formData.teacher?.id === t.id ? 'selected' : ''}`}
-                                            onClick={() => setFormData({ ...formData, teacher: t })}
-                                        >
-                                            <div className="teacher-avatar">
-                                                <UserCircle2 size={24} />
-                                            </div>
-                                            <div className="teacher-info">
-                                                <div className="name">{t.name}</div>
-                                                <div className="email">{t.email}</div>
-                                            </div>
-                                            {formData.teacher?.id === t.id && (
-                                                <CheckCircle2 size={18} className="check-icon" />
-                                            )}
+                                <div className="teacher-list-wrapper" style={{ position: 'relative', marginTop: '8px' }}>
+                                    {scrollState.top && (
+                                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '30px', background: 'linear-gradient(to bottom, var(--bg-card) 20%, transparent)', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', paddingTop: '4px', zIndex: 5, pointerEvents: 'none' }}>
+                                            <ChevronUp size={18} color="var(--primary)" />
                                         </div>
-                                    ))}
+                                    )}
+                                    <div
+                                        id="teacher-list-scroll"
+                                        className="teacher-list"
+                                        onScroll={handleScroll}
+                                        style={{ maxHeight: '135px', overflowY: 'auto' }}
+                                    >
+                                        {filteredTeachers.map(t => (
+                                            <div
+                                                key={t.id}
+                                                className={`teacher-item ${formData.teacher?.id === t.id ? 'selected' : ''}`}
+                                                onClick={() => setFormData({ ...formData, teacher: t })}
+                                            >
+                                                <div className="teacher-avatar">
+                                                    <UserCircle2 size={24} />
+                                                </div>
+                                                <div className="teacher-info">
+                                                    <div className="name">{t.name}</div>
+                                                    <div className="email">{t.email}</div>
+                                                </div>
+                                                {formData.teacher?.id === t.id && (
+                                                    <CheckCircle2 size={18} className="check-icon" />
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {scrollState.bottom && filteredTeachers.length > 2 && (
+                                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '30px', background: 'linear-gradient(to top, var(--bg-card) 20%, transparent)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', paddingBottom: '4px', zIndex: 5, pointerEvents: 'none' }}>
+                                            <ChevronDown size={18} color="var(--primary)" />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BadgeCheck, BadgeAlert, Users, Calendar, UserRound, X, Mail, User } from 'lucide-react';
+import { BadgeCheck, BadgeAlert, Users, Calendar, UserRound, X, Mail, User, Download } from 'lucide-react';
 
 const AllSections = () => {
   const [sections, setSections] = useState([]);
@@ -25,7 +25,28 @@ const AllSections = () => {
     fetchAllSections();
   }, [authHeader]);
 
+  const handleDownloadExcel = async (section) => {
+    try {
+      const response = await axios.get(`http://localhost:8080/api/v1/reports/section/${section.id}/excel`, {
+        headers: { 'Authorization': authHeader },
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Reporte_Seccion_${section.sectionCode}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading excel:', error);
+      alert('Error al descargar el reporte de Excel para esta sección huérfana');
+    }
+  };
+
   if (loading) return <div className="loading-state">Cargando todas las secciones...</div>;
+
+  const hasOrphanedSections = sections.some(s => !s.teacher);
 
   return (
     <div className="sections-container">
@@ -43,6 +64,7 @@ const AllSections = () => {
               <th>Periodo (Sem/Año)</th>
               <th>Estado</th>
               <th>Total Alumnos</th>
+              {hasOrphanedSections && <th>Acciones</th>}
             </tr>
           </thead>
           <tbody>
@@ -82,6 +104,22 @@ const AllSections = () => {
                     <span>{section.students?.length || 0}</span>
                   </div>
                 </td>
+                {hasOrphanedSections && (
+                  <td>
+                    {!section.teacher ? (
+                      <button 
+                        className="icon-btn" 
+                        style={{ color: 'var(--success)' }} 
+                        onClick={() => handleDownloadExcel(section)}
+                        title="Descargar Excel (Sección sin Docente)"
+                      >
+                        <Download size={18} />
+                      </button>
+                    ) : (
+                      <span className="text-muted text-sm">-</span>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
