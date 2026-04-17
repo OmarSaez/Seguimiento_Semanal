@@ -6,7 +6,8 @@ import {
   Clock, 
   FileText, 
   Briefcase,
-  Calendar
+  Calendar,
+  UserCircle2
 } from 'lucide-react';
 import '../TeacherDashboard/TeacherDashboard.css';
 
@@ -26,6 +27,7 @@ const SubirAvance = () => {
   
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
+  const [teacherName, setTeacherName] = useState(null);
   const [problem, setProblem] = useState('');
   const [noProblem, setNoProblem] = useState(true); // Por defecto "No hubo problemas" (estandarizado como NO)
   const [selectedDetails, setSelectedDetails] = useState([]); // Array of { type, context, hh }
@@ -38,7 +40,7 @@ const SubirAvance = () => {
 
   useEffect(() => {
     if (user.sectionId) {
-      fetchProjects();
+      fetchInitialData();
       generateWeeksList();
     }
   }, []);
@@ -71,14 +73,36 @@ const SubirAvance = () => {
     setAvailableWeeks(weeks);
   };
 
-  const fetchProjects = async () => {
+  const fetchInitialData = async () => {
     try {
-      const res = await axios.get(`http://localhost:8080/api/v1/proyects/section/${user.sectionId}`, {
+      const resProj = await axios.get(`http://localhost:8080/api/v1/proyects/section/${user.sectionId}`, {
         headers: { 'Authorization': authHeader }
       });
-      setProjects(res.data);
+      setProjects(resProj.data);
+
+      try {
+        const resSec = await axios.get(`http://localhost:8080/api/v1/sections/${user.sectionId}`, {
+          headers: { 'Authorization': authHeader }
+        });
+        const fetchedTeacher = resSec.data.teacher?.name;
+        setTeacherName(fetchedTeacher ? fetchedTeacher : (user.teacherName || 'No asignado'));
+      } catch(e) {
+        console.error("Error al obtener la sección para leer el docente:", e);
+        setTeacherName(user.teacherName || 'No asignado');
+      }
+
+      try {
+        const resAdv = await axios.get(`http://localhost:8080/api/v1/advances/student/${user.id}`, {
+          headers: { 'Authorization': authHeader }
+        });
+        if (resAdv.data && resAdv.data.length > 0) {
+           const sorted = resAdv.data.sort((a,b) => new Date(b.sendDate) - new Date(a.sendDate));
+           setSelectedProject(sorted[0].proyect.id.toString());
+        }
+      } catch(e) {}
+
     } catch (err) {
-      console.error('Error fetching projects:', err);
+      console.error('Error fetching initial data:', err);
     }
   };
 
@@ -156,15 +180,22 @@ const SubirAvance = () => {
 
   return (
     <div className="upload-advance animate-fade-in">
-      <header className="page-header flex-between">
+      <header className="page-header">
         <div>
           <h2>Subir un nuevo avance</h2>
-          <p>
-            Reporte de actividades semanales • {new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}
+          <p style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
+            <span>Reporte de actividades semanales</span>
+            <span>•</span>
+            <span>{new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            <span>•</span>
+            <span style={{ color: 'var(--primary)', fontWeight: '500' }}>Sección {user.sectionCode}</span>
+            {teacherName && (
+              <>
+                <span>•</span>
+                <span>Docente: {teacherName}</span>
+              </>
+            )}
           </p>
-        </div>
-        <div className="section-badge glass">
-          Sección {user.sectionCode}
         </div>
       </header>
 
@@ -286,7 +317,7 @@ const SubirAvance = () => {
         {/* Problemas */}
         <section className="form-section" style={{ marginTop: '32px' }}>
           <div style={{ 
-            marginBottom: '16px', 
+            marginBottom: noProblem ? 0 : '16px', 
             display: 'flex', 
             alignItems: 'center', 
             gap: '20px',

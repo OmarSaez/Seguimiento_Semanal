@@ -17,10 +17,25 @@ const MisAvances = () => {
   const [advances, setAdvances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
+  const [teacherName, setTeacherName] = useState(null);
 
   useEffect(() => {
     fetchAdvances();
+    fetchTeacher();
   }, []);
+
+  const fetchTeacher = async () => {
+    if (!user.sectionId) return;
+    try {
+      const resSec = await axios.get(`http://localhost:8080/api/v1/sections/${user.sectionId}`, {
+        headers: { 'Authorization': authHeader }
+      });
+      const fetchedTeacher = resSec.data.teacher?.name;
+      setTeacherName(fetchedTeacher ? fetchedTeacher : (user.teacherName || 'No asignado'));
+    } catch (e) {
+      setTeacherName(user.teacherName || 'No asignado');
+    }
+  };
 
   const fetchAdvances = async () => {
     try {
@@ -55,7 +70,17 @@ const MisAvances = () => {
     <div className="my-advances animate-fade-in">
       <header className="page-header">
         <h2>Mis Avances Pasados</h2>
-        <p>Historial de reportes enviados ordenados por fecha.</p>
+        <p style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
+            <span>Historial de reportes enviados ordenados por fecha</span>
+            <span>•</span>
+            <span style={{ color: 'var(--primary)', fontWeight: '500' }}>Sección {user.sectionCode}</span>
+            {teacherName && (
+              <>
+                <span>•</span>
+                <span>Docente: {teacherName}</span>
+              </>
+            )}
+        </p>
       </header>
 
       <div className="advances-list">

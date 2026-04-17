@@ -23,6 +23,7 @@ public class SectionService {
         return sectionRepository.findByTeacherEmailOrderByYearDescSemesterDesc(email);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
     public Optional<Section> findById(Long id) {
         return sectionRepository.findById(id);
     }
