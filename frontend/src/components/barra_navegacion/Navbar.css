@@ -11,9 +11,11 @@
 }
 
 .nav-container {
-  max-width: 1600px;
+  width: 100%;
+  max-width: 100%; /* Fluido total */
   height: 100%;
-  margin: 0 auto;
+  margin: 0;
+  padding: 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;

@@ -6,8 +6,28 @@
 }
 
 .content-inner {
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 100%; /* Totalmente fluido */
+  margin: 0;
+  padding: 0 20px;
+}
+
+/* Ajustes dinámicos para aprovechar pantallas grandes */
+@media (min-width: 1600px) {
+  .page-header h2 {
+    font-size: 2.2rem;
+  }
+  .custom-table td {
+    font-size: 1.1rem;
+    padding: 22px 20px;
+  }
+  .custom-table th {
+    font-size: 0.9rem;
+    padding: 20px;
+  }
+  .primary-btn {
+    padding: 14px 28px;
+    font-size: 1.1rem;
+  }
 }
 
 .page-header {
