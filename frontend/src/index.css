@@ -81,7 +81,7 @@ body[data-theme="dark"] {
 
 @media (max-width: 768px) {
   .dashboard-content {
-    padding: 16px;
+    padding: 8px; /* Reducido de 16px para ganar espacio lateral */
   }
 }
 

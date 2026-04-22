@@ -1,4 +1,4 @@
-.teacher-navbar {
+.teacher-navbar, .student-navbar {
   position: sticky;
   top: 0;
   left: 0;
@@ -45,15 +45,68 @@
   font-size: 1.125rem;
   color: var(--nav-text);
   white-space: nowrap;
+  line-height: 1.1;
+}
+
+@media (max-width: 768px) {
+  .platform-name {
+    white-space: normal;
+    font-size: 0.85rem;
+    max-width: 90px;
+    text-align: left;
+  }
+}
+
+.nav-links-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  margin: 0 16px;
 }
 
 .nav-links {
   display: flex;
   list-style: none;
   gap: 8px;
-  margin: 0 24px;
-  flex: 1;
+  width: 100%;
   justify-content: center;
+}
+
+.nav-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  color: white;
+  background: rgba(0, 0, 0, 0.2);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.nav-indicator.left {
+  left: -5px;
+  background: linear-gradient(to right, var(--nav-bg) 40%, transparent);
+  width: 40px;
+  height: 100%;
+  border-radius: 0;
+  justify-content: flex-start;
+}
+
+.nav-indicator.right {
+  right: -5px;
+  background: linear-gradient(to left, var(--nav-bg) 40%, transparent);
+  width: 40px;
+  height: 100%;
+  border-radius: 0;
+  justify-content: flex-end;
 }
 
 @media (max-width: 900px) {
@@ -150,10 +203,8 @@
   .nav-item {
     padding: 10px;
   }
-  .platform-name {
-    display: none;
-  }
-  .logo-divider {
+  .teacher-navbar .platform-name,
+  .teacher-navbar .logo-divider {
     display: none;
   }
 }
@@ -176,17 +227,23 @@
 }
 
 @media (max-width: 768px) {
-  .teacher-navbar {
-    padding: 0 12px;
+  .teacher-navbar, .student-navbar {
+    padding: 0 6px; /* Reducido de 12px */
+  }
+  .nav-container {
+    padding: 0 4px; /* Reducido de 20px */
   }
   .user-info {
     display: none;
   }
   .nav-logo {
-    gap: 8px;
+    gap: 4px; /* Más compacto */
   }
   .nav-logo img {
-    height: 36px;
+    height: 34px; /* Un pelín más pequeño para ganar aire */
+  }
+  .nav-links-wrapper {
+    margin: 0 4px; /* Reducir margen lateral del menú */
   }
 }
 

@@ -41,7 +41,7 @@ const StudentNavbar = () => {
   ];
 
   return (
-    <nav className="teacher-navbar glass">
+    <nav className="student-navbar glass">
       <div className="nav-container">
         <div className="nav-logo" onClick={() => navigate('/dashboard')}>
           <img src={usachLogo} alt="USACH" />

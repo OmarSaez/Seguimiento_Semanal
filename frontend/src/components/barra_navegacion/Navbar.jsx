@@ -9,7 +9,9 @@ import {
   ShieldPlus, 
   LogOut,
   Moon,
-  Sun
+  Sun,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import usachLogo from '../../assets/image/Usach-PB-300x300.png';
 import './Navbar.css';
@@ -48,6 +50,29 @@ const Navbar = () => {
     { name: 'Ingresar Docente', path: '/teacher/add-teacher', icon: <ShieldPlus size={18} /> },
   ];
 
+  const [scrollState, setScrollState] = useState({ left: false, right: false });
+
+  const handleNavScroll = (e) => {
+    const el = e.target;
+    const canScrollLeft = el.scrollLeft > 5;
+    const canScrollRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 5;
+    setScrollState({ left: canScrollLeft, right: canScrollRight });
+  };
+
+  useEffect(() => {
+    const el = document.getElementById('nav-links-scroll');
+    if (el) {
+      const checkScroll = () => {
+        const canScrollLeft = el.scrollLeft > 5;
+        const canScrollRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 5;
+        setScrollState({ left: canScrollLeft, right: canScrollRight });
+      };
+      checkScroll();
+      window.addEventListener('resize', checkScroll);
+      return () => window.removeEventListener('resize', checkScroll);
+    }
+  }, []);
+
   return (
     <nav className="teacher-navbar glass">
       <div className="nav-container">
@@ -57,19 +82,23 @@ const Navbar = () => {
           <span className="platform-name">Seguimiento Semanal</span>
         </div>
 
-        <ul className="nav-links">
-          {navItems.map((item) => (
-            <li key={item.path}>
-              <NavLink 
-                to={item.path} 
-                className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
-              >
-                {item.icon}
-                <span>{item.name}</span>
-              </NavLink>
-            </li>
-          ))}
-        </ul>
+        <div className="nav-links-wrapper">
+          {scrollState.left && <div className="nav-indicator left"><ChevronLeft size={16} /></div>}
+          <ul className="nav-links" id="nav-links-scroll" onScroll={handleNavScroll}>
+            {navItems.map((item) => (
+              <li key={item.path}>
+                <NavLink 
+                  to={item.path} 
+                  className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
+                >
+                  {item.icon}
+                  <span>{item.name}</span>
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+          {scrollState.right && <div className="nav-indicator right"><ChevronRight size={16} /></div>}
+        </div>
 
         <div className="nav-user">
           <div className="user-info">
