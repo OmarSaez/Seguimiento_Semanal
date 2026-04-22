@@ -159,20 +159,20 @@ const ManageSection = () => {
                     <tbody>
                         {sections.map(s => (
                             <tr key={s.id}>
-                                <td className="bold">{s.sectionCode}</td>
-                                <td>{s.semester}/{s.year}</td>
-                                <td>
+                                <td className="bold" data-label="Código">{s.sectionCode}</td>
+                                <td data-label="Periodo">{s.semester}/{s.year}</td>
+                                <td data-label="Docente">
                                     {s.teacher?.name ? (
                                         s.teacher.name
                                     ) : (
                                         <span className="text-muted" style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>No asignado</span>
                                     )}
                                 </td>
-                                <td>
+                                <td data-label="Estado">
                                     <span className={`status-dot ${s.isActive ? 'active' : 'inactive'}`}></span>
                                     {s.isActive ? 'Activo' : 'Inactivo'}
                                 </td>
-                                <td>
+                                <td data-label="Acciones">
                                     <button className="icon-btn edit" onClick={() => handleOpenModal(s)}>
                                         <Pencil size={18} />
                                     </button>

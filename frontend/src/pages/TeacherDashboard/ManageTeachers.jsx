@@ -167,7 +167,7 @@ const ManageTeachers = () => {
       </header>
 
       <div className="table-container">
-        <table className="custom-table glass">
+        <table className="custom-table table-simple glass">
           <thead>
             <tr>
               <th>Nombre Completo</th>

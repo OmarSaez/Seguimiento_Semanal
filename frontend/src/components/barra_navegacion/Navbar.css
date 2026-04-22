@@ -54,6 +54,24 @@
   justify-content: center;
 }
 
+@media (max-width: 900px) {
+  .nav-links {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 8px 0;
+    margin: 0 12px;
+    gap: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+  }
+  .nav-links::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+  .nav-item {
+    padding: 8px 12px;
+  }
+}
+
 .nav-item {
   display: flex;
   align-items: center;

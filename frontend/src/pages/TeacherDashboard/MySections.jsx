@@ -103,14 +103,14 @@ const MySections = () => {
             <tbody>
               {sections.map((section) => (
                 <tr key={section.id}>
-                  <td className="bold">{section.sectionCode}</td>
-                  <td>
+                  <td className="bold" data-label="Código">{section.sectionCode}</td>
+                  <td data-label="Periodo">
                     <div className="period-cell">
                       <Calendar size={14} />
                       {section.semester}/{section.year}
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Estado">
                     {section.isActive ? (
                       <span className="status-badge active">
                         <BadgeCheck size={14} /> Activo
@@ -121,7 +121,7 @@ const MySections = () => {
                       </span>
                     )}
                   </td>
-                  <td>
+                  <td data-label="Alumnos">
                     <div
                       className="count-cell clickable"
                       onClick={() => setSelectedSection(section)}
@@ -131,7 +131,7 @@ const MySections = () => {
                       <span>{section.students?.length || 0}</span>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Acciones">
                     <button
                       className="download-btn-mini"
                       title="Descargar Reporte Excel"

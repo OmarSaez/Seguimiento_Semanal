@@ -167,7 +167,7 @@ const ManageProjects = () => {
           </header>
 
           <div className="table-container">
-            <table className="custom-table glass">
+            <table className="custom-table table-simple glass">
               <thead>
                 <tr>
                   <th>Código</th>

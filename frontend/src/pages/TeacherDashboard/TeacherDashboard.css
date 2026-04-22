@@ -139,6 +139,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .flex-between {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .flex-between .primary-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .primary-btn {
@@ -659,6 +673,116 @@
   .type-chip {
     padding: 8px 14px !important;
     font-size: 0.8rem !important;
+  }
+
+  /* Responsive Table to Cards */
+  .table-container {
+    background: transparent;
+    border: none;
+    overflow: visible;
+  }
+
+  .custom-table {
+    min-width: unset;
+    background: transparent;
+    border: none;
+  }
+
+  .custom-table thead {
+    display: none;
+  }
+
+  .custom-table:not(.table-simple), 
+  .custom-table:not(.table-simple) tbody, 
+  .custom-table:not(.table-simple) tr, 
+  .custom-table:not(.table-simple) td {
+    display: block;
+    width: 100%;
+  }
+
+  .custom-table:not(.table-simple) tr {
+    background: var(--bg-card);
+    margin-bottom: 20px;
+    border-radius: 20px;
+    padding: 16px;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    position: relative;
+  }
+
+  .custom-table:not(.table-simple) td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    text-align: right;
+  }
+
+  /* Estilos para Tablas Simples (Listas compactas) */
+  .table-simple {
+    min-width: 100% !important;
+  }
+
+  .table-simple thead {
+    display: none;
+  }
+
+  .table-simple tr {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--glass-border);
+    gap: 12px;
+  }
+
+  .table-simple td {
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  .table-simple td.bold {
+    min-width: fit-content;
+    background: var(--primary) !important;
+    color: white;
+    padding: 4px 8px !important;
+    border-radius: 6px;
+    font-size: 0.8rem;
+  }
+}
+
+  .custom-table td:last-child {
+    border-bottom: none;
+    margin-top: 8px;
+    padding-top: 16px;
+  }
+
+  .custom-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-right: 16px;
+    text-align: left;
+  }
+
+  /* Estilos específicos para celdas de acciones */
+  .custom-table td[data-label="Acciones"],
+  .custom-table td[data-label="Acción"] {
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .custom-table td[data-label="Acciones"]::before {
+    margin-bottom: 8px;
+    width: 100%;
+    text-align: center;
+    margin-right: 0;
   }
 }
 
