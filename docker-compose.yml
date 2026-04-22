@@ -41,10 +41,22 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./certs:/etc/nginx/ssl:ro
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot-etc:/etc/letsencrypt:ro
+      - certbot-var:/var/lib/letsencrypt:ro
+      - webroot:/var/www/certbot:ro
     networks:
       - tracking-network
+
+  # Certbot (Para certificados SSL reales)
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - webroot:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 networks:
   tracking-network:
@@ -52,3 +64,6 @@ networks:
 
 volumes:
   postgres_data:
+  certbot-etc:
+  certbot-var:
+  webroot:
