@@ -1,0 +1,50 @@
+services:
+  # Base de datos PostgreSQL
+  db:
+    image: postgres:16-alpine
+    container_name: tracking_db
+    environment:
+      POSTGRES_DB: avance_semanal
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tracking-network
+
+  # Backend (Spring Boot)
+  backend:
+    build: ./backend/semanal
+    container_name: tracking_backend
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/avance_semanal
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      # Configuración de JPA para crear tablas automáticamente si no existen
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8080:8080"
+    networks:
+      - tracking-network
+
+  # Frontend (Vite + Nginx)
+  frontend:
+    build: ./frontend
+    container_name: tracking_frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - tracking-network
+
+networks:
+  tracking-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
