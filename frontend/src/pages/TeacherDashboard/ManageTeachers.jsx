@@ -41,7 +41,7 @@ const ManageTeachers = () => {
 
   const fetchTeachers = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/v1/teachers', {
+      const res = await axios.get('/api/v1/teachers', {
         headers: { 'Authorization': authHeader }
       });
       setTeachers(Array.isArray(res.data) ? res.data : []);
@@ -91,11 +91,11 @@ const ManageTeachers = () => {
 
     try {
       if (formData.id) {
-        await axios.put(`http://localhost:8080/api/v1/teachers/${formData.id}`, payload, {
+        await axios.put(`/api/v1/teachers/${formData.id}`, payload, {
           headers: { 'Authorization': authHeader }
         });
       } else {
-        await axios.post('http://localhost:8080/api/v1/teachers', payload, {
+        await axios.post('/api/v1/teachers', payload, {
           headers: { 'Authorization': authHeader }
         });
       }
@@ -140,7 +140,7 @@ const ManageTeachers = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('¿Estás seguro de eliminar este docente?')) return;
     try {
-      await axios.delete(`http://localhost:8080/api/v1/teachers/${id}`, {
+      await axios.delete(`/api/v1/teachers/${id}`, {
         headers: { 'Authorization': authHeader }
       });
       fetchTeachers();

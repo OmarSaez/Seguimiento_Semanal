@@ -30,8 +30,8 @@ const ManageSection = () => {
     const fetchData = async () => {
         try {
             const [sectionsRes, teachersRes] = await Promise.all([
-                axios.get('http://localhost:8080/api/v1/sections', { headers: { 'Authorization': authHeader } }),
-                axios.get('http://localhost:8080/api/v1/teachers', { headers: { 'Authorization': authHeader } })
+                axios.get('/api/v1/sections', { headers: { 'Authorization': authHeader } }),
+                axios.get('/api/v1/teachers', { headers: { 'Authorization': authHeader } })
             ]);
             setSections(Array.isArray(sectionsRes.data) ? sectionsRes.data : []);
             setTeachers(Array.isArray(teachersRes.data) ? teachersRes.data : []);
@@ -86,11 +86,11 @@ const ManageSection = () => {
 
         try {
             if (formData.id) {
-                await axios.put(`http://localhost:8080/api/v1/sections/${formData.id}`, payload, {
+                await axios.put(`/api/v1/sections/${formData.id}`, payload, {
                     headers: { 'Authorization': authHeader }
                 });
             } else {
-                await axios.post('http://localhost:8080/api/v1/sections', payload, {
+                await axios.post('/api/v1/sections', payload, {
                     headers: { 'Authorization': authHeader }
                 });
             }

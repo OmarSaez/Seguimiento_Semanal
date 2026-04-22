@@ -42,7 +42,7 @@ const ManageStudents = () => {
 
   const fetchSections = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/v1/sections', {
+      const res = await axios.get('/api/v1/sections', {
         headers: { 'Authorization': authHeader }
       });
       setSections(Array.isArray(res.data) ? res.data : []);
@@ -56,7 +56,7 @@ const ManageStudents = () => {
   const fetchStudents = async (sectionId) => {
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:8080/api/v1/students/section/${sectionId}`, {
+      const res = await axios.get(`/api/v1/students/section/${sectionId}`, {
         headers: { 'Authorization': authHeader }
       });
       setStudents(Array.isArray(res.data) ? res.data : []);
@@ -114,11 +114,11 @@ const ManageStudents = () => {
 
     try {
       if (formData.id) {
-        await axios.put(`http://localhost:8080/api/v1/students/${formData.id}`, payload, {
+        await axios.put(`/api/v1/students/${formData.id}`, payload, {
           headers: { 'Authorization': authHeader }
         });
       } else {
-        await axios.post('http://localhost:8080/api/v1/students', payload, {
+        await axios.post('/api/v1/students', payload, {
           headers: { 'Authorization': authHeader }
         });
       }
@@ -133,7 +133,7 @@ const ManageStudents = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('¿Estás seguro de eliminar este estudiante?')) return;
     try {
-      await axios.delete(`http://localhost:8080/api/v1/students/${id}`, {
+      await axios.delete(`/api/v1/students/${id}`, {
         headers: { 'Authorization': authHeader }
       });
       fetchStudents(selectedSection.id);
@@ -184,7 +184,7 @@ const ManageStudents = () => {
     formData.append('file', uploadFile);
 
     try {
-      await axios.post(`http://localhost:8080/api/v1/students/section/${selectedSection.id}/upload`, formData, {
+      await axios.post(`/api/v1/students/section/${selectedSection.id}/upload`, formData, {
         headers: { 
           'Authorization': authHeader,
           'Content-Type': 'multipart/form-data'

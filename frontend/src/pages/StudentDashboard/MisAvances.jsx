@@ -27,7 +27,7 @@ const MisAvances = () => {
   const fetchTeacher = async () => {
     if (!user.sectionId) return;
     try {
-      const resSec = await axios.get(`http://localhost:8080/api/v1/sections/${user.sectionId}`, {
+      const resSec = await axios.get(`/api/v1/sections/${user.sectionId}`, {
         headers: { 'Authorization': authHeader }
       });
       const fetchedTeacher = resSec.data.teacher?.name;
@@ -39,7 +39,7 @@ const MisAvances = () => {
 
   const fetchAdvances = async () => {
     try {
-      const res = await axios.get(`http://localhost:8080/api/v1/advances/student/${user.id}`, {
+      const res = await axios.get(`/api/v1/advances/student/${user.id}`, {
         headers: { 'Authorization': authHeader }
       });
       setAdvances(res.data);

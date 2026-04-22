@@ -12,7 +12,7 @@ const MySections = () => {
 
   const handleDownloadExcel = async (section) => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/v1/reports/section/${section.id}/excel`, {
+      const response = await axios.get(`/api/v1/reports/section/${section.id}/excel`, {
         headers: { 'Authorization': authHeader },
         responseType: 'blob' // Importante para manejar binarios
       });
@@ -33,7 +33,7 @@ const MySections = () => {
 
   const handleDownloadAllZip = async () => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/v1/reports/teacher/excel-zip`, {
+      const response = await axios.get(`/api/v1/reports/teacher/excel-zip`, {
         headers: { 'Authorization': authHeader },
         responseType: 'blob'
       });
@@ -54,7 +54,7 @@ const MySections = () => {
   useEffect(() => {
     const fetchSections = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/v1/sections/teacher/${user.email}`, {
+        const response = await axios.get(`/api/v1/sections/teacher/${user.email}`, {
           headers: { 'Authorization': authHeader }
         });
         // Asegurarse de que la respuesta sea un arreglo

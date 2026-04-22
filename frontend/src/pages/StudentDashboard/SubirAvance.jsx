@@ -75,13 +75,13 @@ const SubirAvance = () => {
 
   const fetchInitialData = async () => {
     try {
-      const resProj = await axios.get(`http://localhost:8080/api/v1/proyects/section/${user.sectionId}`, {
+      const resProj = await axios.get(`/api/v1/proyects/section/${user.sectionId}`, {
         headers: { 'Authorization': authHeader }
       });
       setProjects(resProj.data);
 
       try {
-        const resSec = await axios.get(`http://localhost:8080/api/v1/sections/${user.sectionId}`, {
+        const resSec = await axios.get(`/api/v1/sections/${user.sectionId}`, {
           headers: { 'Authorization': authHeader }
         });
         const fetchedTeacher = resSec.data.teacher?.name;
@@ -92,7 +92,7 @@ const SubirAvance = () => {
       }
 
       try {
-        const resAdv = await axios.get(`http://localhost:8080/api/v1/advances/student/${user.id}`, {
+        const resAdv = await axios.get(`/api/v1/advances/student/${user.id}`, {
           headers: { 'Authorization': authHeader }
         });
         if (resAdv.data && resAdv.data.length > 0) {
@@ -151,7 +151,7 @@ const SubirAvance = () => {
     };
 
     try {
-      await axios.post('http://localhost:8080/api/v1/advances', payload, {
+      await axios.post('/api/v1/advances', payload, {
         headers: { 'Authorization': authHeader }
       });
       setSubmitted(true);

@@ -25,7 +25,7 @@ const Login = () => {
       const loginPassword = userRole === 'STUDENT' ? 'student_access' : password;
       const authHeader = 'Basic ' + btoa(`${email}:${loginPassword}`);
 
-      const response = await axios.get('http://localhost:8080/api/v1/auth/me', {
+      const response = await axios.get('/api/v1/auth/me', {
         headers: {
           'Authorization': authHeader
         }

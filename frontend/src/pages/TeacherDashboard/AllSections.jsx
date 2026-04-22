@@ -11,7 +11,7 @@ const AllSections = () => {
   useEffect(() => {
     const fetchAllSections = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/api/v1/sections', {
+        const response = await axios.get('/api/v1/sections', {
           headers: { 'Authorization': authHeader }
         });
         setSections(Array.isArray(response.data) ? response.data : []);
@@ -27,7 +27,7 @@ const AllSections = () => {
 
   const handleDownloadExcel = async (section) => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/v1/reports/section/${section.id}/excel`, {
+      const response = await axios.get(`/api/v1/reports/section/${section.id}/excel`, {
         headers: { 'Authorization': authHeader },
         responseType: 'blob'
       });

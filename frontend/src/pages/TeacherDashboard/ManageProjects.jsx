@@ -29,7 +29,7 @@ const ManageProjects = () => {
 
   const fetchSections = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/api/v1/sections', {
+      const res = await axios.get('/api/v1/sections', {
         headers: { 'Authorization': authHeader }
       });
       setSections(Array.isArray(res.data) ? res.data : []);
@@ -43,7 +43,7 @@ const ManageProjects = () => {
   const fetchProjects = async (sectionId) => {
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:8080/api/v1/proyects/section/${sectionId}`, {
+      const res = await axios.get(`/api/v1/proyects/section/${sectionId}`, {
         headers: { 'Authorization': authHeader }
       });
       setProjects(Array.isArray(res.data) ? res.data : []);
@@ -78,11 +78,11 @@ const ManageProjects = () => {
 
     try {
       if (formData.id) {
-        await axios.put(`http://localhost:8080/api/v1/proyects/${formData.id}`, payload, {
+        await axios.put(`/api/v1/proyects/${formData.id}`, payload, {
           headers: { 'Authorization': authHeader }
         });
       } else {
-        await axios.post('http://localhost:8080/api/v1/proyects', payload, {
+        await axios.post('/api/v1/proyects', payload, {
           headers: { 'Authorization': authHeader }
         });
       }
@@ -97,7 +97,7 @@ const ManageProjects = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('¿Estás seguro de eliminar este proyecto?')) return;
     try {
-      await axios.delete(`http://localhost:8080/api/v1/proyects/${id}`, {
+      await axios.delete(`/api/v1/proyects/${id}`, {
         headers: { 'Authorization': authHeader }
       });
       fetchProjects(selectedSection.id);
