@@ -12,8 +12,10 @@ import {
   EyeOff,
   BookOpen,
   Calendar,
-  Users
+  Users,
+  AlertTriangle
 } from 'lucide-react';
+import Swal from 'sweetalert2';
 import './TeacherDashboard.css';
 
 const ManageTeachers = () => {
@@ -97,11 +99,41 @@ const ManageTeachers = () => {
           headers: { 'Authorization': authHeader }
         });
       }
-      setShowModal(false);
-      fetchTeachers();
+      
+      const isSelfEditing = formData.id === currentUser.id;
+      
+      if (isSelfEditing) {
+        setShowModal(false);
+        Swal.fire({
+          title: '¡Clave Actualizada!',
+          text: 'Has modificado tu propia contraseña. Por seguridad y para aplicar los cambios, debes volver a iniciar sesión.',
+          icon: 'success',
+          confirmButtonText: 'Ir al Login',
+          confirmButtonColor: 'var(--primary)',
+          allowOutsideClick: false
+        }).then(() => {
+          localStorage.removeItem('auth');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        });
+      } else {
+        setShowModal(false);
+        Swal.fire({
+          title: 'Éxito',
+          text: 'Docente guardado correctamente',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        fetchTeachers();
+      }
     } catch (err) {
       console.error('Error saving teacher:', err);
-      alert('Error al guardar el docente');
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo guardar el docente',
+        icon: 'error'
+      });
     }
   };
 
@@ -187,6 +219,14 @@ const ManageTeachers = () => {
               </button>
             </div>
             <form onSubmit={handleSubmit} className="modal-form">
+              {formData.id === currentUser.id && (
+                <div className="alert-warning sutil-note">
+                  <AlertTriangle size={20} />
+                  <span>
+                    <strong>Nota Importante:</strong> Al cambiar tu propia contraseña, se cerrará tu sesión automáticamente por seguridad. Deberás ingresar de nuevo con tu nueva clave.
+                  </span>
+                </div>
+              )}
               <div className="form-group">
                 <label>Correo Institucional</label>
                 <div className="input-with-icon">

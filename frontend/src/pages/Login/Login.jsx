@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, LogIn, GraduationCap } from 'lucide-react';
+import { Mail, Lock, LogIn, GraduationCap, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import usachLogo from '../../assets/image/Usach-PB-300x300.png';
 import usachColorLogo from '../../assets/image/Usach-Logotipo_Color.png';
@@ -12,6 +12,7 @@ const Login = () => {
   const [userRole, setUserRole] = useState(null); // null, 'STUDENT', 'TEACHER'
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -121,12 +122,20 @@ const Login = () => {
                   <Lock className="input-icon" size={18} />
                   <input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
+                  <button 
+                    type="button" 
+                    className="password-toggle-btn"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
             )}

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { 
-  FolderPlus, 
-  Pencil, 
-  Trash2, 
-  ChevronRight, 
-  X, 
+import {
+  FolderPlus,
+  Pencil,
+  Trash2,
+  ChevronRight,
+  X,
   ArrowLeft,
   Search,
   BookOpen
@@ -70,10 +70,10 @@ const ManageProjects = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = { 
-      name: formData.name, 
+    const payload = {
+      name: formData.name,
       code: formData.code,
-      section: { id: selectedSection.id } 
+      section: { id: selectedSection.id }
     };
 
     try {
@@ -107,7 +107,7 @@ const ManageProjects = () => {
     }
   };
 
-  const filteredSections = sections.filter(s => 
+  const filteredSections = sections.filter(s =>
     s.sectionCode.toLowerCase().includes(sectionSearch.toLowerCase()) ||
     s.teacher?.name.toLowerCase().includes(sectionSearch.toLowerCase())
   );
@@ -125,9 +125,9 @@ const ManageProjects = () => {
 
           <div className="search-box glass" style={{ marginBottom: '24px' }}>
             <Search className="search-icon" size={18} />
-            <input 
-              type="text" 
-              placeholder="Buscar sección por código o profesor..." 
+            <input
+              type="text"
+              placeholder="Buscar sección por código o profesor..."
               value={sectionSearch}
               onChange={e => setSectionSearch(e.target.value)}
             />
@@ -218,21 +218,21 @@ const ManageProjects = () => {
             <form onSubmit={handleSubmit} className="modal-form">
               <div className="form-group">
                 <label>Código del Proyecto</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={formData.code}
-                  onChange={e => setFormData({...formData, code: e.target.value})}
+                  onChange={e => setFormData({ ...formData, code: e.target.value })}
                   placeholder="Ej: P13"
                   required
                 />
               </div>
               <div className="form-group" style={{ marginTop: '16px' }}>
                 <label>Nombre del Proyecto</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  placeholder="Ej: Desarrollo de API REST"
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Ej: Sistema de Gestión Docente"
                   required
                 />
               </div>

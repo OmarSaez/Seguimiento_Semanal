@@ -193,6 +193,25 @@
 .status-dot.active { background: var(--success); box-shadow: 0 0 8px var(--success); }
 .status-dot.inactive { background: var(--error); }
 
+/* Warning Notes */
+.alert-warning.sutil-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 12px;
+  color: #fbbf24;
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.alert-warning.sutil-note svg {
+  flex-shrink: 0;
+}
+
 /* Modal Styles */
 .modal-overlay {
   position: fixed;

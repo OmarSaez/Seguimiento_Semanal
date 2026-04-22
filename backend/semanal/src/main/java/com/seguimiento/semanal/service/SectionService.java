@@ -32,12 +32,27 @@ public class SectionService {
         return sectionRepository.save(section);
     }
 
-    public Section update(Long id, Section section) {
-        if (!sectionRepository.existsById(id)) {
-            throw new RuntimeException("Sección no encontrada");
+    public Section update(Long id, Section sectionDetails) {
+        Section existingSection = sectionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sección no encontrada"));
+
+        // Actualizar solo campos básicos de la sección
+        existingSection.setSectionCode(sectionDetails.getSectionCode());
+        existingSection.setSemester(sectionDetails.getSemester());
+        existingSection.setYear(sectionDetails.getYear());
+        existingSection.setIsActive(sectionDetails.getIsActive());
+        existingSection.setStartDate(sectionDetails.getStartDate());
+        existingSection.setFinishDate(sectionDetails.getFinishDate());
+        
+        // Actualizar el docente si viene en la petición
+        if (sectionDetails.getTeacher() != null) {
+            existingSection.setTeacher(sectionDetails.getTeacher());
         }
-        section.setId(id);
-        return sectionRepository.save(section);
+
+        // NO tocamos existingSection.getProyects() ni getStudents()
+        // así se mantienen los datos existentes.
+
+        return sectionRepository.save(existingSection);
     }
 
     public void deleteById(Long id) {

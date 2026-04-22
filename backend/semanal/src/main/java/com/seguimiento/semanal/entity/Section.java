@@ -20,10 +20,10 @@ import java.util.List;
  */
 @Entity
 @Table(name = "section")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class Section {
 
     @Id
@@ -54,11 +54,11 @@ public class Section {
     private Teacher teacher;
 
 
-    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("section")
     private List<Proyect> proyects;
 
-    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("section")
     private List<Student> students;
 }

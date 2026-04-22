@@ -19,10 +19,10 @@ import java.util.List;
  */
 @Entity
 @Table(name = "proyect")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class Proyect {
 
     @Id

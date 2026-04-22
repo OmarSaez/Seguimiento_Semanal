@@ -95,6 +95,25 @@
   color: var(--text-muted);
 }
 
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s ease;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.password-toggle-btn:hover {
+  color: var(--text-main);
+}
+
 .input-wrapper input {
   width: 100%;
   padding: 12px 12px 12px 42px;
