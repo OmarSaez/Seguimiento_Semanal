@@ -201,7 +201,7 @@ const SubirAvance = () => {
 
       <form onSubmit={handleSubmit} className="advance-form glass">
         {/* Selección de Semana y Proyecto */}
-        <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+        <div className="selection-header-grid">
           <section className="form-section">
             <h3 className="section-title">
               <Calendar size={20} />
@@ -315,15 +315,9 @@ const SubirAvance = () => {
         </section>
 
         {/* Problemas */}
-        <section className="form-section" style={{ marginTop: '32px' }}>
-          <div style={{ 
-            marginBottom: noProblem ? 0 : '16px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '20px',
-            flexWrap: 'wrap'
-          }}>
-            <h3 className="section-title" style={{ margin: 0 }}>¿Presentó algún inconveniente o problema esta semana?</h3>
+        <section className="form-section section-problem" style={{ marginTop: '32px' }}>
+          <div className="problem-header">
+            <h3 className="section-title" style={{ margin: 0 }}>¿Hubo inconvenientes esta semana?</h3>
             <div 
               onClick={() => setNoProblem(!noProblem)}
               style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
