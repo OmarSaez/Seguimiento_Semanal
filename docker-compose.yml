@@ -12,8 +12,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - tracking-network
 
   # Backend (Spring Boot)
   backend:
@@ -27,8 +25,6 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-    networks:
-      - tracking-network
 
   # Frontend (Vite + Nginx)
   frontend:
@@ -45,10 +41,8 @@ services:
       - certbot-etc:/etc/letsencrypt:ro
       - certbot-var:/var/lib/letsencrypt:ro
       - webroot:/var/www/certbot:ro
-    networks:
-      - tracking-network
 
-  # Certbot (Para certificados SSL reales)
+  # Certbot (SSL automático)
   certbot:
     image: certbot/certbot
     container_name: certbot
@@ -58,12 +52,12 @@ services:
       - webroot:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
-networks:
-  tracking-network:
-    driver: bridge
-
 volumes:
   postgres_data:
+    name: tracking_db_data
   certbot-etc:
+    name: tracking_certbot_etc
   certbot-var:
+    name: tracking_certbot_var
   webroot:
+    name: tracking_certbot_webroot

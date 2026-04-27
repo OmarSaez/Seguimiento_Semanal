@@ -41,7 +41,9 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "https://158.170.35.71",
-                "http://158.170.35.71"
+                "http://158.170.35.71",
+                "https://askone.diinf.usach.cl",
+                "http://askone.diinf.usach.cl"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
