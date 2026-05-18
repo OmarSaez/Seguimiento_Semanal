@@ -37,6 +37,19 @@ const SubirAvance = () => {
   const [submitted, setSubmitted] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(1);
   const [availableWeeks, setAvailableWeeks] = useState([]); // Array of { number, label, isFuture }
+  const [reportedWeeks, setReportedWeeks] = useState([]); // Array of week numbers already reported
+
+  useEffect(() => {
+    if (availableWeeks.length > 0) {
+      const validWeeks = availableWeeks.filter(w => !w.isFuture && !reportedWeeks.includes(w.number));
+      if (validWeeks.length > 0) {
+        if (!validWeeks.some(w => w.number === currentWeek)) {
+          const highestValid = Math.max(...validWeeks.map(w => w.number));
+          setCurrentWeek(highestValid);
+        }
+      }
+    }
+  }, [availableWeeks, reportedWeeks, currentWeek]);
 
   useEffect(() => {
     if (user.sectionId) {
@@ -98,6 +111,9 @@ const SubirAvance = () => {
         if (resAdv.data && resAdv.data.length > 0) {
            const sorted = resAdv.data.sort((a,b) => new Date(b.sendDate) - new Date(a.sendDate));
            setSelectedProject(sorted[0].proyect.id.toString());
+           
+           const weeks = resAdv.data.map(adv => adv.numberWeek);
+           setReportedWeeks(weeks);
         }
       } catch(e) {}
 
@@ -213,16 +229,21 @@ const SubirAvance = () => {
                 onChange={(e) => setCurrentWeek(parseInt(e.target.value))}
                 className="custom-select"
                 required
+                disabled={availableWeeks.filter(w => !w.isFuture && !reportedWeeks.includes(w.number)).length === 0}
               >
-                {availableWeeks.filter(w => !w.isFuture).map(w => (
+                {availableWeeks.filter(w => !w.isFuture && !reportedWeeks.includes(w.number)).map(w => (
                   <option key={w.number} value={w.number}>{w.label}</option>
                 ))}
               </select>
-              {availableWeeks.filter(w => !w.isFuture).length === 0 && (
+              {availableWeeks.filter(w => !w.isFuture).length === 0 ? (
                 <p style={{ color: 'var(--error)', fontSize: '0.8rem', marginTop: '8px' }}>
                   El semestre aún no ha comenzado.
                 </p>
-              )}
+              ) : availableWeeks.filter(w => !w.isFuture && !reportedWeeks.includes(w.number)).length === 0 ? (
+                <p style={{ color: 'var(--success)', fontSize: '0.8rem', marginTop: '8px' }}>
+                  ¡Al día! Has reportado todos tus avances para las semanas transcurridas.
+                </p>
+              ) : null}
             </div>
           </section>
 
@@ -385,7 +406,7 @@ const SubirAvance = () => {
         </section>
 
         <div className="form-footer" style={{ marginTop: '40px' }}>
-          <button type="submit" className="primary-btn big-btn" disabled={loading}>
+          <button type="submit" className="primary-btn big-btn" disabled={loading || availableWeeks.filter(w => !w.isFuture && !reportedWeeks.includes(w.number)).length === 0}>
             {loading ? 'Enviando...' : (
               <>
                 <Send size={18} />
