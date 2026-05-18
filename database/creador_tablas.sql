@@ -38,7 +38,9 @@ CREATE TABLE student (
     name VARCHAR(255) NOT NULL,
     lastname VARCHAR(255) NOT NULL,
     id_section INTEGER NOT NULL,
-    CONSTRAINT fk_section_student FOREIGN KEY (id_section) REFERENCES section(id) ON DELETE CASCADE
+    id_proyect INTEGER,
+    CONSTRAINT fk_section_student FOREIGN KEY (id_section) REFERENCES section(id) ON DELETE CASCADE,
+    CONSTRAINT fk_proyect_student FOREIGN KEY (id_proyect) REFERENCES proyect(id) ON DELETE SET NULL
 );
 
 -- Tabla: advance

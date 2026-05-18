@@ -21,18 +21,18 @@ INSERT INTO proyect (name, code, id_section) VALUES
 ('SGT HUAP', 'P13', 1);
 
 -- 5. Estudiantes (11 en Seccion 1)
-INSERT INTO student (email, name, lastname, id_section) VALUES 
-('juan.perez@usach.cl', 'Juan', 'Perez', 1),         -- ID 1
-('pedro.armas@usach.cl', 'Pedro', 'Armas', 1),       -- ID 2
-('andres.vera@usach.cl', 'Andres', 'Vera', 1),       -- ID 3 (GHOST)
-('maria.gomez@usach.cl', 'Maria', 'Gomez', 1),       -- ID 4
-('raul.pino@usach.cl', 'Raul', 'Pino', 1),           -- ID 5
-('ana.luz@usach.cl', 'Ana', 'Luz', 1),               -- ID 6 (GHOST)
-('elena.rivas@usach.cl', 'Elena', 'Rivas', 1),       -- ID 7
-('diego.torres@usach.cl', 'Diego', 'Torres', 1),     -- ID 8
-('sofia.mar@usach.cl', 'Sofia', 'Mar', 1),           -- ID 9
-('lucas.ver@usach.cl', 'Lucas', 'Ver', 1),           -- ID 10
-('felipe.solis@usach.cl', 'Felipe', 'Solis', 1);     -- ID 11
+INSERT INTO student (email, name, lastname, id_section, id_proyect) VALUES 
+('juan.perez@usach.cl', 'Juan', 'Perez', 1, 1),         -- ID 1
+('pedro.armas@usach.cl', 'Pedro', 'Armas', 1, 1),       -- ID 2
+('andres.vera@usach.cl', 'Andres', 'Vera', 1, 1),       -- ID 3 (GHOST)
+('maria.gomez@usach.cl', 'Maria', 'Gomez', 1, 2),       -- ID 4
+('raul.pino@usach.cl', 'Raul', 'Pino', 1, 2),           -- ID 5
+('ana.luz@usach.cl', 'Ana', 'Luz', 1, NULL),            -- ID 6 (GHOST, sin proyecto)
+('elena.rivas@usach.cl', 'Elena', 'Rivas', 1, 2),       -- ID 7
+('diego.torres@usach.cl', 'Diego', 'Torres', 1, 3),     -- ID 8
+('sofia.mar@usach.cl', 'Sofia', 'Mar', 1, 3),           -- ID 9
+('lucas.ver@usach.cl', 'Lucas', 'Ver', 1, 3),           -- ID 10
+('felipe.solis@usach.cl', 'Felipe', 'Solis', 1, 3);     -- ID 11
 
 -- 6. Avances (ID 1-19)
 -- Juan (1, 2, 3)

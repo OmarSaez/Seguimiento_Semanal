@@ -43,4 +43,8 @@ public class Proyect {
     @OneToMany(mappedBy = "proyect", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("proyect")
     private List<Advance> advances;
+
+    @OneToMany(mappedBy = "proyect")
+    @JsonIgnoreProperties("proyect")
+    private List<Student> students;
 }
