@@ -19,6 +19,27 @@ const MisAvances = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [teacherName, setTeacherName] = useState(null);
 
+  const getWeekRangeString = (numberWeek) => {
+    if (!user.startDate) return '';
+    const start = new Date(user.startDate);
+    
+    const weekStart = new Date(start);
+    weekStart.setDate(start.getDate() + ((numberWeek - 1) * 7));
+    
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    
+    const formatDate = (date) => {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+    
+    return `(${formatDate(weekStart)} - ${formatDate(weekEnd)})`;
+  };
+
+
   useEffect(() => {
     fetchAdvances();
     fetchTeacher();
@@ -42,7 +63,8 @@ const MisAvances = () => {
       const res = await axios.get(`/api/v1/advances/student/${user.id}`, {
         headers: { 'Authorization': authHeader }
       });
-      setAdvances(res.data);
+      const sorted = (res.data || []).sort((a, b) => b.numberWeek - a.numberWeek);
+      setAdvances(sorted);
     } catch (err) {
       console.error('Error fetching advances:', err);
     } finally {
@@ -89,6 +111,11 @@ const MisAvances = () => {
             <div className="advance-summary" onClick={() => toggleExpand(advance.id)}>
               <div className="summary-info">
                 <div className="week-badge">Semana {advance.numberWeek}</div>
+                {user.startDate && (
+                  <div className="week-range-info" style={{ color: 'var(--text-muted)', fontSize: '0.95rem', fontWeight: '500' }}>
+                    {getWeekRangeString(advance.numberWeek)}
+                  </div>
+                )}
                 <div className="date-info">
                   <Calendar size={16} />
                   <span>{new Date(advance.sendDate).toLocaleDateString('es-CL')}</span>
