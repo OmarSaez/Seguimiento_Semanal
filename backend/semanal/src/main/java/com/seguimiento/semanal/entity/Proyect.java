@@ -45,6 +45,6 @@ public class Proyect {
     private List<Advance> advances;
 
     @OneToMany(mappedBy = "proyect")
-    @JsonIgnoreProperties("proyect")
+    @JsonIgnoreProperties({"proyect", "advances"})
     private List<Student> students;
 }

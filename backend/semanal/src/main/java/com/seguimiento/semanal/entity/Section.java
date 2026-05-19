@@ -59,6 +59,6 @@ public class Section {
     private List<Proyect> proyects;
 
     @OneToMany(mappedBy = "section", cascade = CascadeType.ALL)
-    @JsonIgnoreProperties("section")
+    @JsonIgnoreProperties({"section", "advances"})
     private List<Student> students;
 }

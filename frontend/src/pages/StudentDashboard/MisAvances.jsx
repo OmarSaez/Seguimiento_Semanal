@@ -19,6 +19,20 @@ const MisAvances = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [teacherName, setTeacherName] = useState(null);
 
+  const currentActiveWeek = (() => {
+    if (!user.startDate) return 0;
+    const start = new Date(user.startDate);
+    const today = new Date();
+    let weekVal = 1;
+    for (let i = 0; i < 20; i++) {
+      const weekStart = new Date(start);
+      weekStart.setDate(start.getDate() + (i * 7));
+      if (weekStart > today) break;
+      weekVal = i + 1;
+    }
+    return weekVal;
+  })();
+
   const getWeekRangeString = (numberWeek) => {
     if (!user.startDate) return '';
     const start = new Date(user.startDate);
@@ -165,22 +179,45 @@ const MisAvances = () => {
                   </div>
 
                   <div className="details-section">
-                    <h4>Planeado para la próxima semana</h4>
+                    <h4>
+                      {advance.numberWeek === currentActiveWeek
+                        ? "Planeado para la próxima semana"
+                        : `Lo planeado para la Semana ${advance.numberWeek + 1} ${getWeekRangeString(advance.numberWeek + 1)}`}
+                    </h4>
                     <div className="detail-cards">
-                      {advance.futureAdvances?.map(f => (
-                        <div key={f.id} className="mini-card glass" style={{ borderLeft: '3px solid var(--success)', background: 'rgba(16, 185, 129, 0.02)', marginBottom: '12px', padding: '16px', borderRadius: '12px' }}>
-                          <div className="mini-header" style={{ marginBottom: '4px' }}>
-                            <span className="type" style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '0.9rem' }}>
-                              <CheckCircle size={14} /> {f.typeAdvance}
-                            </span>
+                      {advance.futureAdvances && advance.futureAdvances.length > 0 ? (
+                        advance.futureAdvances.map(f => (
+                          <div key={f.id} className="mini-card glass" style={{ borderLeft: '3px solid var(--success)', background: 'rgba(16, 185, 129, 0.02)', marginBottom: '12px', padding: '16px', borderRadius: '12px' }}>
+                            <div className="mini-header" style={{ marginBottom: '4px' }}>
+                              <span className="type" style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '0.9rem' }}>
+                                <CheckCircle size={14} /> {f.typeAdvance}
+                              </span>
+                            </div>
+                            {f.context ? (
+                              <p className="context" style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.4' }}>{f.context}</p>
+                            ) : (
+                              <p className="context" style={{ fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Sin descripción detallada</p>
+                            )}
                           </div>
-                          {f.context ? (
-                            <p className="context" style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.4' }}>{f.context}</p>
-                          ) : (
-                            <p className="context" style={{ fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Sin descripción detallada</p>
-                          )}
+                        ))
+                      ) : (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          color: 'var(--success)',
+                          fontSize: '0.88rem',
+                          fontWeight: '500',
+                          background: 'rgba(16, 185, 129, 0.05)',
+                          border: '1px solid rgba(16, 185, 129, 0.1)',
+                          padding: '12px 16px',
+                          borderRadius: '8px',
+                          boxSizing: 'border-box'
+                        }}>
+                          <CheckCircle size={16} style={{ flexShrink: 0 }} />
+                          <span>No se planificaron actividades futuras para esta semana.</span>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 </div>

@@ -7,7 +7,8 @@ import {
   FileText,
   Briefcase,
   Calendar,
-  UserCircle2
+  UserCircle2,
+  AlertCircle
 } from 'lucide-react';
 import '../TeacherDashboard/TeacherDashboard.css';
 
@@ -35,6 +36,55 @@ const SubirAvance = () => {
   const [noProblem, setNoProblem] = useState(false); // Por defecto desactivado (obliga a marcar "No hubo problemas" si corresponde)
   const [selectedDetails, setSelectedDetails] = useState([]); // Array of { type, context, hh }
   const [selectedFutures, setSelectedFutures] = useState([]); // Array of { type, context }
+  const [validationErrors, setValidationErrors] = useState({
+    detailsSection: false,
+    detailContexts: [],
+    detailHhs: [],
+    problem: false,
+    solution: false,
+    futureContexts: []
+  });
+  const [globalErrorMsg, setGlobalErrorMsg] = useState('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  useEffect(() => {
+    if (showConfirmModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showConfirmModal]);
+
+  const getFirstErrorField = () => {
+    // 1. Actividades de la semana en orden de ACTIVITY_TYPES
+    for (const type of ACTIVITY_TYPES) {
+      if (validationErrors.detailContexts.includes(type)) {
+        return { section: 'detailContext', type };
+      }
+      if (validationErrors.detailHhs.includes(type)) {
+        return { section: 'detailHh', type };
+      }
+    }
+    // 2. Problemas
+    if (!noProblem) {
+      if (validationErrors.problem) {
+        return { section: 'problem' };
+      }
+      if (validationErrors.solution) {
+        return { section: 'solution' };
+      }
+    }
+    // 3. Actividades Futuras en orden de ACTIVITY_TYPES
+    for (const type of ACTIVITY_TYPES) {
+      if (validationErrors.futureContexts.includes(type)) {
+        return { section: 'futureContext', type };
+      }
+    }
+    return null;
+  };
 
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -132,38 +182,190 @@ const SubirAvance = () => {
   };
 
   const handleToggleDetail = (type) => {
+    setGlobalErrorMsg('');
     if (selectedDetails.find(d => d.type === type)) {
       setSelectedDetails(selectedDetails.filter(d => d.type !== type));
+      setValidationErrors(prev => ({
+        ...prev,
+        detailContexts: prev.detailContexts.filter(t => t !== type),
+        detailHhs: prev.detailHhs.filter(t => t !== type)
+      }));
     } else {
       setSelectedDetails([...selectedDetails, { type, context: '', hh: '' }]);
+      setValidationErrors(prev => ({
+        ...prev,
+        detailsSection: false
+      }));
     }
   };
 
   const handleDetailChange = (type, field, value) => {
+    setGlobalErrorMsg('');
     setSelectedDetails(selectedDetails.map(d =>
       d.type === type ? { ...d, [field]: value } : d
     ));
+
+    if (field === 'context' && value.trim()) {
+      setValidationErrors(prev => ({
+        ...prev,
+        detailContexts: prev.detailContexts.filter(t => t !== type)
+      }));
+    }
+    if (field === 'hh' && value && !isNaN(value) && parseInt(value) > 0) {
+      setValidationErrors(prev => ({
+        ...prev,
+        detailHhs: prev.detailHhs.filter(t => t !== type)
+      }));
+    }
   };
 
   const handleToggleFuture = (type) => {
+    setGlobalErrorMsg('');
     if (selectedFutures.find(f => f.type === type)) {
       setSelectedFutures(selectedFutures.filter(f => f.type !== type));
+      setValidationErrors(prev => ({
+        ...prev,
+        futureContexts: prev.futureContexts.filter(t => t !== type)
+      }));
     } else {
       setSelectedFutures([...selectedFutures, { type, context: '' }]);
     }
   };
 
   const handleFutureChange = (type, field, value) => {
+    setGlobalErrorMsg('');
     setSelectedFutures(selectedFutures.map(f =>
       f.type === type ? { ...f, [field]: value } : f
     ));
+    if (field === 'context' && value.trim()) {
+      setValidationErrors(prev => ({
+        ...prev,
+        futureContexts: prev.futureContexts.filter(t => t !== type)
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedProject) return alert('Selecciona un proyecto');
-    if (selectedDetails.length === 0) return alert('Debes agregar al menos una actividad realizada');
 
+    const newErrors = {
+      detailsSection: false,
+      detailContexts: [],
+      detailHhs: [],
+      problem: false,
+      solution: false,
+      futureContexts: []
+    };
+
+    let hasError = false;
+
+    // 1. Validar Actividades de la Semana
+    if (selectedDetails.length === 0) {
+      newErrors.detailsSection = true;
+      hasError = true;
+    } else {
+      selectedDetails.forEach(d => {
+        if (!d.context || !d.context.trim()) {
+          newErrors.detailContexts.push(d.type);
+          hasError = true;
+        }
+        if (!d.hh || isNaN(d.hh) || parseInt(d.hh) <= 0) {
+          newErrors.detailHhs.push(d.type);
+          hasError = true;
+        }
+      });
+    }
+
+    // 2. Validar Problemas / Inconvenientes
+    if (!noProblem) {
+      if (!problem || !problem.trim()) {
+        newErrors.problem = true;
+        hasError = true;
+      }
+      if (!solution || !solution.trim()) {
+        newErrors.solution = true;
+        hasError = true;
+      }
+    }
+
+    // 3. Validar Actividades Futuras
+    if (selectedFutures.length > 0) {
+      selectedFutures.forEach(f => {
+        if (!f.context || !f.context.trim()) {
+          newErrors.futureContexts.push(f.type);
+          hasError = true;
+        }
+      });
+    }
+
+    if (hasError) {
+      setValidationErrors(newErrors);
+      
+      // Calcular primer mensaje de error global a mostrar según prioridad
+      let errorMsg = '';
+      if (selectedDetails.length === 0) {
+        errorMsg = 'Debes seleccionar al menos una actividad y rellenar este campo';
+      } else {
+        const hasEmptyDetailContext = selectedDetails.some(d => !d.context || !d.context.trim());
+        if (hasEmptyDetailContext) {
+          errorMsg = 'Debes rellenar este campo';
+        } else {
+          const hasEmptyDetailHh = selectedDetails.some(d => !d.hh || isNaN(d.hh) || parseInt(d.hh) <= 0);
+          if (hasEmptyDetailHh) {
+            errorMsg = 'Debes indicar las Horas Humanas';
+          }
+        }
+      }
+
+      if (!errorMsg && !noProblem) {
+        if (!problem || !problem.trim() || !solution || !solution.trim()) {
+          errorMsg = 'Debes rellenar este campo';
+        }
+      }
+
+      if (!errorMsg && selectedFutures.length > 0) {
+        const hasEmptyFutureContext = selectedFutures.some(f => !f.context || !f.context.trim());
+        if (hasEmptyFutureContext) {
+          errorMsg = 'Debes rellenar este campo';
+        }
+      }
+
+      setGlobalErrorMsg(errorMsg);
+      
+      // Encontrar a cuál selector hacer scroll
+      let errorSelector = '';
+      if (newErrors.detailsSection || newErrors.detailContexts.length > 0 || newErrors.detailHhs.length > 0) {
+        errorSelector = '.activity-list-container';
+      } else if (newErrors.problem || newErrors.solution) {
+        errorSelector = '.problems-section';
+      } else if (newErrors.futureContexts.length > 0) {
+        errorSelector = '.future-list-container';
+      }
+
+      if (errorSelector) {
+        const section = document.querySelector(errorSelector);
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+      return;
+    }
+
+    setValidationErrors({
+      detailsSection: false,
+      detailContexts: [],
+      detailHhs: [],
+      problem: false,
+      solution: false,
+      futureContexts: []
+    });
+    setGlobalErrorMsg('');
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    setShowConfirmModal(false);
     setLoading(true);
     const payload = {
       student: { id: user.id },
@@ -232,7 +434,7 @@ const SubirAvance = () => {
         </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="advance-form glass">
+      <form onSubmit={handleSubmit} className="advance-form glass" noValidate>
         {/* Selección de Semana y Proyecto */}
         <div className="selection-header-grid">
           <section className="form-section">
@@ -345,10 +547,28 @@ const SubirAvance = () => {
             gap: '0',
             borderRadius: '12px',
             overflow: 'hidden',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: validationErrors.detailsSection ? '2px solid rgba(239, 68, 68, 0.8)' : '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: validationErrors.detailsSection ? '0 0 16px rgba(239, 68, 68, 0.25)' : 'none',
             background: 'rgba(255, 255, 255, 0.01)',
-            marginTop: '20px'
+            marginTop: '20px',
+            transition: 'border 0.2s ease, box-shadow 0.2s ease'
           }}>
+            {validationErrors.detailsSection && (
+              <div className="animate-slide-up" style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                borderBottom: '1px solid rgba(239, 68, 68, 0.2)',
+                color: 'var(--error)',
+                padding: '12px 20px',
+                fontSize: '0.88rem',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <AlertCircle size={16} />
+                <span>Debes seleccionar al menos una actividad realizada de la lista.</span>
+              </div>
+            )}
             {/* Cabecera del Listado (Headers) */}
             <div className="activity-list-header" style={{
               display: 'grid',
@@ -432,17 +652,22 @@ const SubirAvance = () => {
                             margin: 0,
                             padding: '10px 12px 24px 12px',
                             background: 'rgba(0, 0, 0, 0.2)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            border: validationErrors.detailContexts.includes(type)
+                              ? '1px solid rgba(239, 68, 68, 0.8)'
+                              : '1px solid rgba(255, 255, 255, 0.1)',
+                            boxShadow: validationErrors.detailContexts.includes(type)
+                              ? '0 0 8px rgba(239, 68, 68, 0.2)'
+                              : 'none',
                             borderRadius: '8px',
                             color: 'var(--text-light)',
                             fontSize: '0.9rem',
                             resize: 'none',
                             fontFamily: 'inherit',
                             outline: 'none',
-                            transition: 'border-color 0.2s ease'
+                            transition: 'all 0.2s ease'
                           }}
-                          onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                          onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+                          onFocus={(e) => e.target.style.borderColor = validationErrors.detailContexts.includes(type) ? 'rgba(239, 68, 68, 0.9)' : 'var(--primary)'}
+                          onBlur={(e) => e.target.style.borderColor = validationErrors.detailContexts.includes(type) ? 'rgba(239, 68, 68, 0.8)' : 'rgba(255, 255, 255, 0.1)'}
                         />
                         <span style={{
                           position: 'absolute',
@@ -456,6 +681,23 @@ const SubirAvance = () => {
                         }}>
                           {256 - (detail.context || '').length} carac.
                         </span>
+                        {(() => {
+                          const firstErr = getFirstErrorField();
+                          if (firstErr && firstErr.section === 'detailContext' && firstErr.type === type) {
+                            return (
+                              <span style={{
+                                color: 'var(--error)',
+                                fontSize: '0.82rem',
+                                marginTop: '6px',
+                                display: 'block',
+                                fontWeight: '600'
+                              }}>
+                                Debes rellenar este campo
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     ) : (
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem', fontStyle: 'italic' }}>
@@ -465,40 +707,67 @@ const SubirAvance = () => {
                   </div>
 
                   {/* Columna 3: Horas Dedicadas (Sólo si está seleccionada) */}
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '44px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '44px', flexDirection: 'column' }}>
                     {isSelected ? (
-                      <div className="animate-fade-in" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={detail.hh}
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/\D/g, '');
-                            if (val === '') {
-                              handleDetailChange(type, 'hh', '');
-                              return;
-                            }
-                            const num = parseInt(val);
-                            if (num <= 168) {
-                              handleDetailChange(type, 'hh', num.toString());
-                            }
-                          }}
-                          placeholder="HH"
-                          required
-                          style={{
-                            width: '64px',
-                            textAlign: 'center',
-                            margin: 0,
-                            padding: '10px 8px',
-                            background: 'rgba(0, 0, 0, 0.2)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '8px',
-                            color: 'var(--text-light)',
-                            fontSize: '0.95rem',
-                            fontWeight: '600'
-                          }}
-                        />
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '500' }}>hrs</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div className="animate-fade-in" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={detail.hh}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, '');
+                              if (val === '') {
+                                handleDetailChange(type, 'hh', '');
+                                return;
+                              }
+                              const num = parseInt(val);
+                              if (num <= 168) {
+                                handleDetailChange(type, 'hh', num.toString());
+                              }
+                            }}
+                            placeholder="HH"
+                            required
+                            style={{
+                              width: '64px',
+                              textAlign: 'center',
+                              margin: 0,
+                              padding: '10px 8px',
+                              background: 'rgba(0, 0, 0, 0.2)',
+                              border: validationErrors.detailHhs.includes(type)
+                                ? '1px solid rgba(239, 68, 68, 0.8)'
+                                : '1px solid rgba(255, 255, 255, 0.1)',
+                              boxShadow: validationErrors.detailHhs.includes(type)
+                                ? '0 0 8px rgba(239, 68, 68, 0.2)'
+                                : 'none',
+                              borderRadius: '8px',
+                              color: 'var(--text-light)',
+                              fontSize: '0.95rem',
+                              fontWeight: '600',
+                              outline: 'none',
+                              transition: 'all 0.2s ease'
+                            }}
+                          />
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '500' }}>hrs</span>
+                        </div>
+                        {(() => {
+                          const firstErr = getFirstErrorField();
+                          if (firstErr && firstErr.section === 'detailHh' && firstErr.type === type) {
+                            return (
+                              <span style={{
+                                color: 'var(--error)',
+                                fontSize: '0.78rem',
+                                marginTop: '6px',
+                                display: 'block',
+                                fontWeight: '600',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                Debes indicar las Horas Humanas
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     ) : (
                       <span style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>—</span>
@@ -511,11 +780,17 @@ const SubirAvance = () => {
         </section>
 
         {/* Problemas */}
-        <section className="form-section section-problem" style={{ marginTop: '32px' }}>
+        <section className="form-section problems-section" style={{ marginTop: '32px' }}>
           <div className="problem-header">
             <h3 className="section-title" style={{ margin: 0 }}>¿Hubo inconvenientes esta semana?</h3>
             <div
-              onClick={() => setNoProblem(!noProblem)}
+              onClick={() => {
+                const newVal = !noProblem;
+                setNoProblem(newVal);
+                if (newVal) {
+                  setValidationErrors(prev => ({ ...prev, problem: false, solution: false }));
+                }
+              }}
               style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
             >
               <div
@@ -556,7 +831,13 @@ const SubirAvance = () => {
                 <div style={{ position: 'relative', width: '100%' }}>
                   <textarea
                     value={problem}
-                    onChange={(e) => setProblem(e.target.value)}
+                    onChange={(e) => {
+                      setProblem(e.target.value);
+                      setGlobalErrorMsg('');
+                      if (e.target.value.trim()) {
+                        setValidationErrors(prev => ({ ...prev, problem: false }));
+                      }
+                    }}
                     placeholder="Describe detalladamente los problemas que afectaron tu avance..."
                     required={!noProblem}
                     maxLength={256}
@@ -565,17 +846,22 @@ const SubirAvance = () => {
                       minHeight: '80px',
                       padding: '10px 12px 28px 12px',
                       background: 'rgba(0, 0, 0, 0.2)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      border: validationErrors.problem
+                        ? '1px solid rgba(239, 68, 68, 0.8)'
+                        : '1px solid rgba(255, 255, 255, 0.1)',
+                      boxShadow: validationErrors.problem
+                        ? '0 0 8px rgba(239, 68, 68, 0.2)'
+                        : 'none',
                       borderRadius: '8px',
                       color: 'var(--text-light)',
                       fontSize: '0.9rem',
                       lineHeight: '1.4',
                       resize: 'vertical',
                       outline: 'none',
-                      transition: 'border-color 0.2s ease'
+                      transition: 'all 0.2s ease'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+                    onFocus={(e) => e.target.style.borderColor = validationErrors.problem ? 'rgba(239, 68, 68, 0.9)' : 'var(--primary)'}
+                    onBlur={(e) => e.target.style.borderColor = validationErrors.problem ? 'rgba(239, 68, 68, 0.8)' : 'rgba(255, 255, 255, 0.1)'}
                   />
                   <span style={{
                     position: 'absolute',
@@ -589,6 +875,23 @@ const SubirAvance = () => {
                   }}>
                     {256 - (problem || '').length} carac.
                   </span>
+                  {(() => {
+                    const firstErr = getFirstErrorField();
+                    if (firstErr && firstErr.section === 'problem') {
+                      return (
+                        <span style={{
+                          color: 'var(--error)',
+                          fontSize: '0.85rem',
+                          marginTop: '6px',
+                          display: 'block',
+                          fontWeight: '600'
+                        }}>
+                          Debes rellenar este campo
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </div>
               <div className="form-group">
@@ -598,7 +901,13 @@ const SubirAvance = () => {
                 <div style={{ position: 'relative', width: '100%' }}>
                   <textarea
                     value={solution}
-                    onChange={(e) => setSolution(e.target.value)}
+                    onChange={(e) => {
+                      setSolution(e.target.value);
+                      setGlobalErrorMsg('');
+                      if (e.target.value.trim()) {
+                        setValidationErrors(prev => ({ ...prev, solution: false }));
+                      }
+                    }}
                     placeholder="Describe la solución aplicada o el plan de acción para resolver el inconveniente..."
                     required={!noProblem}
                     maxLength={256}
@@ -607,17 +916,22 @@ const SubirAvance = () => {
                       minHeight: '80px',
                       padding: '10px 12px 28px 12px',
                       background: 'rgba(0, 0, 0, 0.2)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      border: validationErrors.solution
+                        ? '1px solid rgba(239, 68, 68, 0.8)'
+                        : '1px solid rgba(255, 255, 255, 0.1)',
+                      boxShadow: validationErrors.solution
+                        ? '0 0 8px rgba(239, 68, 68, 0.2)'
+                        : 'none',
                       borderRadius: '8px',
                       color: 'var(--text-light)',
                       fontSize: '0.9rem',
                       lineHeight: '1.4',
                       resize: 'vertical',
                       outline: 'none',
-                      transition: 'border-color 0.2s ease'
+                      transition: 'all 0.2s ease'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+                    onFocus={(e) => e.target.style.borderColor = validationErrors.solution ? 'rgba(239, 68, 68, 0.9)' : 'var(--primary)'}
+                    onBlur={(e) => e.target.style.borderColor = validationErrors.solution ? 'rgba(239, 68, 68, 0.8)' : 'rgba(255, 255, 255, 0.1)'}
                   />
                   <span style={{
                     position: 'absolute',
@@ -631,6 +945,23 @@ const SubirAvance = () => {
                   }}>
                     {256 - (solution || '').length} carac.
                   </span>
+                  {(() => {
+                    const firstErr = getFirstErrorField();
+                    if (firstErr && firstErr.section === 'solution') {
+                      return (
+                        <span style={{
+                          color: 'var(--error)',
+                          fontSize: '0.85rem',
+                          marginTop: '6px',
+                          display: 'block',
+                          fontWeight: '600'
+                        }}>
+                          Debes rellenar este campo
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </div>
             </div>
@@ -754,17 +1085,22 @@ const SubirAvance = () => {
                             minHeight: '60px',
                             padding: '10px 12px 28px 12px',
                             background: 'rgba(0, 0, 0, 0.2)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            border: validationErrors.futureContexts.includes(type)
+                              ? '1px solid rgba(239, 68, 68, 0.8)'
+                              : '1px solid rgba(255, 255, 255, 0.1)',
+                            boxShadow: validationErrors.futureContexts.includes(type)
+                              ? '0 0 8px rgba(239, 68, 68, 0.2)'
+                              : 'none',
                             borderRadius: '8px',
                             color: 'var(--text-light)',
                             fontSize: '0.9rem',
                             lineHeight: '1.4',
                             resize: 'vertical',
                             outline: 'none',
-                            transition: 'border-color 0.2s ease'
+                            transition: 'all 0.2s ease'
                           }}
-                          onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                          onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+                          onFocus={(e) => e.target.style.borderColor = validationErrors.futureContexts.includes(type) ? 'rgba(239, 68, 68, 0.9)' : 'var(--primary)'}
+                          onBlur={(e) => e.target.style.borderColor = validationErrors.futureContexts.includes(type) ? 'rgba(239, 68, 68, 0.8)' : 'rgba(255, 255, 255, 0.1)'}
                         />
                         <span style={{
                           position: 'absolute',
@@ -778,6 +1114,23 @@ const SubirAvance = () => {
                         }}>
                           {256 - (future.context || '').length} carac.
                         </span>
+                        {(() => {
+                          const firstErr = getFirstErrorField();
+                          if (firstErr && firstErr.section === 'futureContext' && firstErr.type === type) {
+                            return (
+                              <span style={{
+                                color: 'var(--error)',
+                                fontSize: '0.85rem',
+                                marginTop: '6px',
+                                display: 'block',
+                                fontWeight: '600'
+                              }}>
+                                Debes rellenar este campo
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     ) : (
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontStyle: 'italic' }}>
@@ -802,6 +1155,220 @@ const SubirAvance = () => {
           </button>
         </div>
       </form>
+
+      {showConfirmModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0, 0, 0, 0.55)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999,
+          padding: '20px',
+          boxSizing: 'border-box'
+        }}>
+          <div className="animate-scale-up" style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--glass-border)',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '680px',
+            maxHeight: '80vh',
+            boxShadow: '0 24px 64px rgba(0, 0, 0, 0.15)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: '20px 28px',
+              borderBottom: '1px solid var(--glass-border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <AlertCircle size={24} style={{ color: 'var(--primary)' }} />
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-main)', fontWeight: '700' }}>
+                  Resumen y Confirmación de Envío
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  Por favor, revisa el detalle del reporte antes de enviarlo.
+                </p>
+              </div>
+            </div>
+
+            {/* Content (Scrollable) */}
+            <div style={{
+              padding: '24px 28px',
+              overflowY: 'auto',
+              flex: '1 1 auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+              boxSizing: 'border-box'
+            }}>
+              {/* Semana actual */}
+              <div>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '0.82rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700' }}>
+                  Actividades Realizadas esta Semana
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {selectedDetails.map(d => (
+                    <div key={d.type} style={{
+                      background: 'var(--bg-dark)',
+                      border: '1px solid var(--glass-border)',
+                      borderRadius: '8px',
+                      padding: '12px 16px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.9rem' }}>{d.type}</span>
+                        <span style={{ fontSize: '0.8rem', background: 'rgba(0, 164, 153, 0.08)', border: '1px solid var(--primary)', color: 'var(--primary)', padding: '2px 8px', borderRadius: '12px', fontWeight: '600' }}>
+                          {d.hh} hrs
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>{d.context}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Problemas / Inconvenientes */}
+              <div>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '0.82rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700' }}>
+                  Problemas & Soluciones
+                </h4>
+                {noProblem ? (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    color: 'var(--success)',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    background: 'rgba(16, 185, 129, 0.05)',
+                    border: '1px solid rgba(16, 185, 129, 0.1)',
+                    padding: '12px 16px',
+                    borderRadius: '8px'
+                  }}>
+                    <CheckCircle2 size={16} />
+                    <span>No se presentaron inconvenientes esta semana.</span>
+                  </div>
+                ) : (
+                  <div style={{
+                    background: 'var(--bg-dark)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: '8px',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase' }}>Inconveniente:</span>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.88rem', color: 'var(--text-main)', lineHeight: '1.4' }}>{problem}</p>
+                    </div>
+                    <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '12px' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase' }}>Solución aplicada:</span>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.88rem', color: 'var(--text-main)', lineHeight: '1.4' }}>{solution}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Actividades Futuras */}
+              <div>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '0.82rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700' }}>
+                  Actividades Planeadas para la Próxima Semana
+                </h4>
+                {selectedFutures.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {selectedFutures.map(f => (
+                      <div key={f.type} style={{
+                        background: 'var(--bg-dark)',
+                        border: '1px solid var(--glass-border)',
+                        borderRadius: '8px',
+                        padding: '12px 16px'
+                      }}>
+                        <span style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.9rem', display: 'block', marginBottom: '6px' }}>{f.type}</span>
+                        <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>{f.context}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    color: 'var(--success)',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    background: 'rgba(16, 185, 129, 0.05)',
+                    border: '1px solid rgba(16, 185, 129, 0.1)',
+                    padding: '12px 16px',
+                    borderRadius: '8px'
+                  }}>
+                    <CheckCircle2 size={16} />
+                    <span>Has indicado que no hay actividades futuras para la próxima semana.</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Advertencia final */}
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.05)',
+                border: '1px solid rgba(239, 68, 68, 0.15)',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                marginTop: '4px'
+              }}>
+                <AlertCircle size={20} style={{ color: 'var(--error)', flexShrink: 0 }} />
+                <span style={{ fontSize: '0.85rem', color: 'var(--error)', fontWeight: '600', lineHeight: '1.4' }}>
+                  Esta acción es irreversible y no se podrá modificar posteriormente.
+                </span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              padding: '20px 28px',
+              borderTop: '1px solid var(--glass-border)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              gap: '16px'
+            }}>
+              <span style={{ marginRight: 'auto', fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: '600' }}>
+                ¿Estás seguro que quieres enviar el reporte?
+              </span>
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={() => setShowConfirmModal(false)}
+                style={{ padding: '10px 20px', fontSize: '0.9rem', minWidth: '80px', borderRadius: '12px', margin: 0 }}
+              >
+                No, volver
+              </button>
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={handleConfirmSubmit}
+                style={{ padding: '10px 24px', fontSize: '0.9rem', minWidth: '100px', borderRadius: '12px', margin: 0 }}
+              >
+                Sí, enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
