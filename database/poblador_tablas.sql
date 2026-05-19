@@ -36,50 +36,50 @@ INSERT INTO student (email, name, lastname, id_section, id_proyect) VALUES
 
 -- 6. Avances (ID 1-19)
 -- Juan (1, 2, 3)
-INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem) VALUES 
-(1, 1, '2026-04-05 10:00:00', 1, 'Ninguno'), -- 1
-(1, 1, '2026-04-12 11:00:00', 2, 'Ninguno'), -- 2
-(1, 1, '2026-04-16 09:00:00', 3, 'Ninguno'); -- 3
+INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem, solution) VALUES 
+(1, 1, '2026-04-05 10:00:00', 1, 'Ninguno', 'Ninguna'), -- 1
+(1, 1, '2026-04-12 11:00:00', 2, 'Ninguno', 'Ninguna'), -- 2
+(1, 1, '2026-04-16 09:00:00', 3, 'Ninguno', 'Ninguna'); -- 3
 
 -- Pedro (4, 5) - Batch de 2
-INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem) VALUES 
-(2, 1, '2026-04-16 14:00:00', 1, 'Ninguno'), -- 4
-(2, 1, '2026-04-16 14:05:00', 2, 'Ninguno'); -- 5
+INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem, solution) VALUES 
+(2, 1, '2026-04-16 14:00:00', 1, 'Ninguno', 'Ninguna'), -- 4
+(2, 1, '2026-04-16 14:05:00', 2, 'Ninguno', 'Ninguna'); -- 5
 
 -- Maria (6, 7) - Cumple 50%
-INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem) VALUES 
-(4, 2, '2026-04-06 15:00:00', 1, 'Ninguno'), -- 6
-(4, 2, '2026-04-13 16:00:00', 2, 'Ninguno'); -- 7
+INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem, solution) VALUES 
+(4, 2, '2026-04-06 15:00:00', 1, 'Ninguno', 'Ninguna'), -- 6
+(4, 2, '2026-04-13 16:00:00', 2, 'Ninguno', 'Ninguna'); -- 7
 
 -- Raul (8, 9) - Mentiroso 0%
-INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem) VALUES 
-(5, 2, '2026-04-05 18:00:00', 1, 'Ninguno'), -- 8
-(5, 2, '2026-04-13 10:00:00', 2, 'Ninguno'); -- 9
+INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem, solution) VALUES 
+(5, 2, '2026-04-05 18:00:00', 1, 'Ninguno', 'Ninguna'), -- 8
+(5, 2, '2026-04-13 10:00:00', 2, 'Ninguno', 'Ninguna'); -- 9
 
 -- Elena (10) - Retraso 2 sem
-INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem) VALUES 
-(7, 2, '2026-04-07 09:00:00', 1, 'El cliente canceló la reunión a último minuto por una emergencia, lo que retrasó el levantamiento de requerimientos.'); -- 10
+INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem, solution) VALUES 
+(7, 2, '2026-04-07 09:00:00', 1, 'El cliente canceló la reunión a último minuto por una emergencia, lo que retrasó el levantamiento de requerimientos.', 'Se reagendó una nueva reunión extraordinaria de levantamiento para el inicio de la semana siguiente y se preparó material previo de forma remota.'); -- 10
 
 -- Diego (11, 12, 13)
-INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem) VALUES 
-(8, 3, '2026-04-05 20:00:00', 1, 'Ninguno'), -- 11
-(8, 3, '2026-04-12 18:00:00', 2, 'Problemas de configuración con el entorno de la base de datos local y dependencias de la versión del motor de BDD.'), -- 12
-(8, 3, '2026-04-16 08:30:00', 3, 'Ninguno'); -- 13
+INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem, solution) VALUES 
+(8, 3, '2026-04-05 20:00:00', 1, 'Ninguno', 'Ninguna'), -- 11
+(8, 3, '2026-04-12 18:00:00', 2, 'Problemas de configuración con el entorno de la base de datos local y dependencias de la versión del motor de BDD.', 'Se revisaron guías de instalación oficial de PostgreSQL, se limpió la caché de dependencias y se reinstalaron las dependencias correctas compartiendo una imagen Docker común.'), -- 12
+(8, 3, '2026-04-16 08:30:00', 3, 'Ninguno', 'Ninguna'); -- 13
 
 -- Sofia (14, 15)
-INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem) VALUES 
-(9, 3, '2026-04-06 12:00:00', 1, 'Dificultades técnicas entendiendo el stack de frontend, hemos tenido un inicio lento.'), -- 14
-(9, 3, '2026-04-14 11:00:00', 2, 'Ninguno'); -- 15
+INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem, solution) VALUES 
+(9, 3, '2026-04-06 12:00:00', 1, 'Dificultades técnicas entendiendo el stack de frontend, hemos tenido un inicio lento.', 'Se organizó una sesión de pair programming interna y se revisaron tutoriales básicos de React.'), -- 14
+(9, 3, '2026-04-14 11:00:00', 2, 'Ninguno', 'Ninguna'); -- 15
 
 -- Lucas (16, 17, 18) - SUPER BATCH de 3
-INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem) VALUES 
-(10, 3, '2026-04-16 17:00:00', 1, 'Ninguno'), -- 16
-(10, 3, '2026-04-16 17:01:00', 2, 'Ninguno'), -- 17
-(10, 3, '2026-04-16 17:02:00', 3, 'Ninguno'); -- 18
+INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem, solution) VALUES 
+(10, 3, '2026-04-16 17:00:00', 1, 'Ninguno', 'Ninguna'), -- 16
+(10, 3, '2026-04-16 17:01:00', 2, 'Ninguno', 'Ninguna'), -- 17
+(10, 3, '2026-04-16 17:02:00', 3, 'Ninguno', 'Ninguna'); -- 18
 
 -- Felipe (19) - Retraso 2 sem
-INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem) VALUES 
-(11, 3, '2026-04-05 23:00:00', 1, 'Licencia médica por influenza durante toda la semana, no pude conectarme a trabajar.'); -- 19
+INSERT INTO advance (id_student, id_proyect, send_date, number_week, problem, solution) VALUES 
+(11, 3, '2026-04-05 23:00:00', 1, 'Licencia médica por influenza durante toda la semana, no pude conectarme a trabajar.', 'Se notificó al docente y al equipo de forma oportuna para redistribuir tareas críticas y priorizar la recuperación médica.'); -- 19
 
 
 -- 7. Detalles (Más robustos y con más variedad de actividades por semana)
@@ -146,35 +146,45 @@ INSERT INTO advance_detail (id_advance, type_advance, context, hh) VALUES
 
 -- 8. Futuros (LAS PROMESAS QUE ALIMENTAN EL KPI)
 -- Juan S1 promises QA and DB logic for S2 -> Did both
-INSERT INTO advance_future (id_advance, type_advance) VALUES (1, 'Pruebas/QA'); 
-INSERT INTO advance_future (id_advance, type_advance) VALUES (1, 'Diseño/Desarrollo de Software');
+INSERT INTO advance_future (id_advance, type_advance, context) VALUES 
+(1, 'Pruebas/QA', 'Ejecución de pruebas unitarias sobre los nuevos controladores REST.'), 
+(1, 'Diseño/Desarrollo de Software', 'Implementación de la persistencia de datos en PostgreSQL.');
 
 -- Juan S2 promises Doc for S3 -> Did Doc (Also did extra SW design, so still 100% promised fulfillment)
-INSERT INTO advance_future (id_advance, type_advance) VALUES (2, 'Documentacion'); 
+INSERT INTO advance_future (id_advance, type_advance, context) VALUES 
+(2, 'Documentacion', 'Escritura del manual de instalación local del sistema y configuración inicial.'); 
 
 -- Pedro S1 promises Desarrollo and Reuniones for S2 -> Did both
-INSERT INTO advance_future (id_advance, type_advance) VALUES (4, 'Diseño/Desarrollo de Software');
-INSERT INTO advance_future (id_advance, type_advance) VALUES (4, 'Reuniones con cliente');
+INSERT INTO advance_future (id_advance, type_advance, context) VALUES 
+(4, 'Diseño/Desarrollo de Software', 'Codificación del módulo de autenticación con Spring Security.'),
+(4, 'Reuniones con cliente', 'Sesión de validación del diseño de base de datos con el cliente.');
 
 -- Maria S1 promises Desarrollo and QA for S2 -> Did Desarrollo but NO QA (A medias, 50% fulfillment)
-INSERT INTO advance_future (id_advance, type_advance) VALUES (6, 'Diseño/Desarrollo de Software'); 
-INSERT INTO advance_future (id_advance, type_advance) VALUES (6, 'Pruebas/QA'); 
+INSERT INTO advance_future (id_advance, type_advance, context) VALUES 
+(6, 'Diseño/Desarrollo de Software', 'Maquetación de la pantalla de inicio y navegación en React.'), 
+(6, 'Pruebas/QA', 'Verificación de la compatibilidad CSS en navegadores móviles.'); 
 
 -- Raul S1 promises Desarrollo for S2 -> Did Reuniones (Mentiroso, 0% fulfillment)
-INSERT INTO advance_future (id_advance, type_advance) VALUES (8, 'Diseño/Desarrollo de Software');
+INSERT INTO advance_future (id_advance, type_advance, context) VALUES 
+(8, 'Diseño/Desarrollo de Software', 'Creación del servicio de importación masiva de estudiantes.');
 
 -- Diego S1 promises Desarrollo and QA for S2 -> Did both
-INSERT INTO advance_future (id_advance, type_advance) VALUES (11, 'Diseño/Desarrollo de Software'); 
-INSERT INTO advance_future (id_advance, type_advance) VALUES (11, 'Pruebas/QA'); 
+INSERT INTO advance_future (id_advance, type_advance, context) VALUES 
+(11, 'Diseño/Desarrollo de Software', 'Corrección de errores del instalador local del motor de BDD.'), 
+(11, 'Pruebas/QA', 'Pruebas de conectividad con la base de datos PostgreSQL.'); 
 
 -- Diego S2 promises Doc and Desarrollo for S3 -> Did both
-INSERT INTO advance_future (id_advance, type_advance) VALUES (12, 'Documentacion');
-INSERT INTO advance_future (id_advance, type_advance) VALUES (12, 'Diseño/Desarrollo de Software');
+INSERT INTO advance_future (id_advance, type_advance, context) VALUES 
+(12, 'Documentacion', 'Creación del diccionario de datos y diagrama entidad-relación.'),
+(12, 'Diseño/Desarrollo de Software', 'Desarrollo de los endpoints CRUD de la sección de proyectos.');
 
 -- Sofia S1 promises Desarrollo for S2 -> Did Desarrollo
-INSERT INTO advance_future (id_advance, type_advance) VALUES (14, 'Diseño/Desarrollo de Software'); 
+INSERT INTO advance_future (id_advance, type_advance, context) VALUES 
+(14, 'Diseño/Desarrollo de Software', 'Implementación del estado global en frontend para las vistas del docente.'); 
 
 -- Lucas S1 promises Desarrollo for S2 -> Did Desarrollo
-INSERT INTO advance_future (id_advance, type_advance) VALUES (16, 'Diseño/Desarrollo de Software'); 
+INSERT INTO advance_future (id_advance, type_advance, context) VALUES 
+(16, 'Diseño/Desarrollo de Software', 'Implementación de los servicios base de gestión de alumnos.'); 
 -- Lucas S2 promises Desarrollo for S3 -> Did Desarrollo
-INSERT INTO advance_future (id_advance, type_advance) VALUES (17, 'Diseño/Desarrollo de Software');
+INSERT INTO advance_future (id_advance, type_advance, context) VALUES 
+(17, 'Diseño/Desarrollo de Software', 'Desarrollo del formulario de edición de proyectos en el frontend.');

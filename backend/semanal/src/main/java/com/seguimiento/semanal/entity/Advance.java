@@ -48,8 +48,11 @@ public class Advance {
     @Column(name = "number_week")
     private Integer numberWeek;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "problem", length = 256)
     private String problem;
+
+    @Column(name = "solution", length = 256)
+    private String solution;
 
     @OneToMany(mappedBy = "advance", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("advance")

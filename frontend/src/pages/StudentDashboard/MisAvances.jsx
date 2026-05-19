@@ -133,10 +133,18 @@ const MisAvances = () => {
               <div className="advance-details-expanded">
                 <div className="divider"></div>
                 
-                {advance.problem && (
-                  <div className="problem-note">
-                    <strong>Problemas reportados:</strong>
-                    <p>{advance.problem}</p>
+                {advance.problem && advance.problem !== 'Ninguno' && (
+                  <div className="problem-note" style={{ background: 'rgba(239, 68, 68, 0.03)', borderLeft: '4px solid var(--error)', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
+                    <div>
+                      <strong>Problema reportado:</strong>
+                      <p style={{ marginTop: '4px', fontSize: '0.9rem', color: 'var(--text-main)' }}>{advance.problem}</p>
+                    </div>
+                    {advance.solution && advance.solution !== 'Ninguna' && (
+                      <div style={{ marginTop: '12px', borderTop: '1px solid rgba(239, 68, 68, 0.15)', paddingTop: '10px' }}>
+                        <strong style={{ color: 'var(--success)' }}>Solución aplicada / Plan de Acción:</strong>
+                        <p style={{ marginTop: '4px', fontSize: '0.9rem', color: 'var(--text-main)' }}>{advance.solution}</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -158,11 +166,19 @@ const MisAvances = () => {
 
                   <div className="details-section">
                     <h4>Planeado para la próxima semana</h4>
-                    <div className="future-list">
+                    <div className="detail-cards">
                       {advance.futureAdvances?.map(f => (
-                        <div key={f.id} className="future-tag">
-                          <CheckCircle size={14} />
-                          <span>{f.typeAdvance}</span>
+                        <div key={f.id} className="mini-card glass" style={{ borderLeft: '3px solid var(--success)', background: 'rgba(16, 185, 129, 0.02)', marginBottom: '12px', padding: '16px', borderRadius: '12px' }}>
+                          <div className="mini-header" style={{ marginBottom: '4px' }}>
+                            <span className="type" style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '0.9rem' }}>
+                              <CheckCircle size={14} /> {f.typeAdvance}
+                            </span>
+                          </div>
+                          {f.context ? (
+                            <p className="context" style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.4' }}>{f.context}</p>
+                          ) : (
+                            <p className="context" style={{ fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Sin descripción detallada</p>
+                          )}
                         </div>
                       ))}
                     </div>

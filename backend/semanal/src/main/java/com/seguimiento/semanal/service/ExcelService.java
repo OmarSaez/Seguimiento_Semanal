@@ -94,7 +94,7 @@ public class ExcelService {
         String[] headers = {
             "Fecha Envío", "Alumno", "Email", "Proyecto", "Semana", 
             "Actividad Realizada", "Horas (HH)", "Contexto/Detalle", 
-            "Problemas Reportados", "Actividades Planeadas Futuras"
+            "Problemas Reportados", "Solución / Acción", "Actividades Planeadas Futuras"
         };
 
         CellStyle headerStyle = createHeaderStyle(workbook);
@@ -114,10 +114,11 @@ public class ExcelService {
             String projectName = advance.getProyect().getName();
             String sendDate = advance.getSendDate() != null ? advance.getSendDate().format(formatter) : "N/A";
             String problems = advance.getProblem();
+            String solution = advance.getSolution();
             
             String futurePlanned = advance.getFutureAdvances().stream()
-                    .map(AdvanceFuture::getTypeAdvance)
-                    .collect(Collectors.joining(", "));
+                     .map(f -> f.getTypeAdvance() + (f.getContext() != null && !f.getContext().trim().isEmpty() ? " (" + f.getContext().trim() + ")" : ""))
+                     .collect(Collectors.joining(", "));
 
             for (AdvanceDetail detail : advance.getDetails()) {
                 Row row = sheet.createRow(rowIdx++);
@@ -130,7 +131,8 @@ public class ExcelService {
                 row.createCell(6).setCellValue(detail.getHh() != null ? detail.getHh() : 0);
                 row.createCell(7).setCellValue(detail.getContext());
                 row.createCell(8).setCellValue(problems);
-                row.createCell(9).setCellValue(futurePlanned);
+                row.createCell(9).setCellValue(solution);
+                row.createCell(10).setCellValue(futurePlanned);
             }
         }
 

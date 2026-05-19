@@ -34,7 +34,7 @@ public class AdvanceDetail {
     @Column(name = "type_advance", nullable = false)
     private String typeAdvance;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "context", length = 256)
     private String context;
 
     @Column(name = "hh")

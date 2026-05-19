@@ -33,4 +33,7 @@ public class AdvanceFuture {
 
     @Column(name = "type_advance", nullable = false)
     private String typeAdvance;
+
+    @Column(name = "context", length = 256)
+    private String context;
 }

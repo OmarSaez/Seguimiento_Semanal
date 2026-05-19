@@ -50,7 +50,8 @@ CREATE TABLE advance (
     id_proyect INTEGER NOT NULL,
     send_date TIMESTAMP,
     number_week INTEGER,
-    problem TEXT,
+    problem VARCHAR(256),
+    solution VARCHAR(256),
     CONSTRAINT fk_student FOREIGN KEY (id_student) REFERENCES student(id) ON DELETE CASCADE,
     CONSTRAINT fk_proyect FOREIGN KEY (id_proyect) REFERENCES proyect(id) ON DELETE CASCADE
 );
@@ -60,7 +61,7 @@ CREATE TABLE advance_detail (
     id SERIAL PRIMARY KEY,
     id_advance INTEGER NOT NULL,
     type_advance VARCHAR(255) NOT NULL,
-    context TEXT,
+    context VARCHAR(256),
     hh INTEGER,
     CONSTRAINT fk_advance FOREIGN KEY (id_advance) REFERENCES advance(id) ON DELETE CASCADE
 );
@@ -69,5 +70,6 @@ CREATE TABLE advance_future (
     id SERIAL PRIMARY KEY,
     id_advance INTEGER NOT NULL,
     type_advance VARCHAR(100) NOT NULL,
+    context VARCHAR(256),
     CONSTRAINT fk_advance_future FOREIGN KEY (id_advance) REFERENCES advance(id) ON DELETE CASCADE
 );
