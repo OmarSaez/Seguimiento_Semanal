@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { BadgeCheck, BadgeAlert, Users, Calendar, UserRound, X, Mail, User, Download } from 'lucide-react';
+import './TeacherDashboard.css';
 
 const AllSections = () => {
   const [sections, setSections] = useState([]);

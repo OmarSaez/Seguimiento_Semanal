@@ -23,6 +23,7 @@ const ManageProjects = () => {
   const [sectionSearch, setSectionSearch] = useState('');
   const [formData, setFormData] = useState({ id: null, name: '', code: '' });
   const [viewingStudentsProject, setViewingStudentsProject] = useState(null);
+  const [studentSearchTerm, setStudentSearchTerm] = useState('');
 
   const authHeader = localStorage.getItem('auth');
 
@@ -75,6 +76,7 @@ const ManageProjects = () => {
   };
 
   const handleOpenModal = (project = null) => {
+    setStudentSearchTerm('');
     if (project) {
       setFormData({ id: project.id, name: project.name, code: project.code });
       const ids = project.students ? project.students.map(s => s.id) : [];
@@ -311,45 +313,118 @@ const ManageProjects = () => {
                     No hay alumnos matriculados en esta sección para asignar.
                   </p>
                 ) : (
-                  <div className="students-checklist glass" style={{
-                    maxHeight: '180px',
-                    overflowY: 'auto',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px'
-                  }}>
-                    {sectionStudents.map(student => {
-                      const isChecked = checkedStudentIds.includes(student.id);
-                      return (
-                        <label key={student.id} style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          cursor: 'pointer',
-                          fontSize: '0.9rem',
+                  <>
+                    <div className="search-box-wrapper" style={{ marginBottom: '10px', position: 'relative' }}>
+                      <input
+                        type="text"
+                        placeholder="Buscar alumno por nombre o correo..."
+                        value={studentSearchTerm}
+                        onChange={e => setStudentSearchTerm(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px 10px 36px',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          background: 'rgba(255, 255, 255, 0.03)',
                           color: 'var(--text-light)',
-                          userSelect: 'none'
-                        }}>
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => handleToggleStudent(student.id)}
-                            style={{
-                              width: '16px',
-                              height: '16px',
+                          fontSize: '0.88rem',
+                          boxSizing: 'border-box',
+                          transition: 'all 0.3s ease'
+                        }}
+                      />
+                      <Search size={16} style={{
+                        position: 'absolute',
+                        left: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'var(--text-muted)',
+                        pointerEvents: 'none'
+                      }} />
+                      {studentSearchTerm && (
+                        <button
+                          type="button"
+                          onClick={() => setStudentSearchTerm('')}
+                          style={{
+                            position: 'absolute',
+                            right: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--text-muted)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: 0
+                          }}
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                    <div className="students-checklist glass" style={{
+                      maxHeight: '180px',
+                      overflowY: 'auto',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px'
+                    }}>
+                      {(() => {
+                        const filtered = sectionStudents.filter(student => {
+                          const term = studentSearchTerm.toLowerCase();
+                          const fullName = `${student.name} ${student.lastname}`.toLowerCase();
+                          const email = (student.email || '').toLowerCase();
+                          return fullName.includes(term) || email.includes(term);
+                        });
+                        
+                        if (filtered.length === 0) {
+                          return (
+                            <p style={{
+                              color: 'var(--text-muted)',
+                              fontSize: '0.85rem',
+                              fontStyle: 'italic',
+                              textAlign: 'center',
+                              margin: '20px 0'
+                            }}>
+                              No se encontraron alumnos coincidentes.
+                            </p>
+                          );
+                        }
+
+                        return filtered.map(student => {
+                          const isChecked = checkedStudentIds.includes(student.id);
+                          return (
+                            <label key={student.id} style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
                               cursor: 'pointer',
-                              accentColor: 'var(--primary)'
-                            }}
-                          />
-                          <span>{student.name} {student.lastname} ({student.email})</span>
-                        </label>
-                      );
-                    })}
-                  </div>
+                              fontSize: '0.9rem',
+                              color: 'var(--text-light)',
+                              userSelect: 'none'
+                            }}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => handleToggleStudent(student.id)}
+                                style={{
+                                  width: '16px',
+                                  height: '16px',
+                                  cursor: 'pointer',
+                                  accentColor: 'var(--primary)'
+                                }}
+                              />
+                              <span>{student.name} {student.lastname} ({student.email})</span>
+                            </label>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </>
                 )}
               </div>
               <div className="modal-footer">
