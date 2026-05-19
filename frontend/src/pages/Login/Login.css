@@ -290,3 +290,21 @@
     padding: 30px 20px;
   }
 }
+
+.author-signature {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  opacity: 0.05;
+  user-select: all;
+  transition: opacity 0.3s ease;
+  pointer-events: auto;
+  z-index: 50;
+  font-family: monospace;
+}
+
+.author-signature:hover {
+  opacity: 0.8;
+}

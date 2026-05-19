@@ -94,7 +94,7 @@ public class ExcelService {
         String[] headers = {
             "Fecha Envío", "Alumno", "Email", "Proyecto", "Semana", 
             "Actividad Realizada", "Horas (HH)", "Contexto/Detalle", 
-            "Problemas Reportados", "Solución / Acción", "Actividades Planeadas Futuras"
+            "Problemas Reportados", "Solución / Acción", "Actividad Planeada Futura", "Detalle Planeado Futuro"
         };
 
         CellStyle headerStyle = createHeaderStyle(workbook);
@@ -113,13 +113,11 @@ public class ExcelService {
             String studentEmail = advance.getStudent().getEmail();
             String projectName = advance.getProyect().getName();
             String sendDate = advance.getSendDate() != null ? advance.getSendDate().format(formatter) : "N/A";
-            String problems = advance.getProblem();
-            String solution = advance.getSolution();
             
-            String futurePlanned = advance.getFutureAdvances().stream()
-                     .map(f -> f.getTypeAdvance() + (f.getContext() != null && !f.getContext().trim().isEmpty() ? " (" + f.getContext().trim() + ")" : ""))
-                     .collect(Collectors.joining(", "));
+            String problems = cleanValue(advance.getProblem());
+            String solution = cleanValue(advance.getSolution());
 
+            // 1. Actividades realizadas
             for (AdvanceDetail detail : advance.getDetails()) {
                 Row row = sheet.createRow(rowIdx++);
                 row.createCell(0).setCellValue(sendDate);
@@ -129,10 +127,59 @@ public class ExcelService {
                 row.createCell(4).setCellValue("Semana " + advance.getNumberWeek());
                 row.createCell(5).setCellValue(detail.getTypeAdvance());
                 row.createCell(6).setCellValue(detail.getHh() != null ? detail.getHh() : 0);
-                row.createCell(7).setCellValue(detail.getContext());
-                row.createCell(8).setCellValue(problems);
-                row.createCell(9).setCellValue(solution);
-                row.createCell(10).setCellValue(futurePlanned);
+                row.createCell(7).setCellValue(detail.getContext() != null && !detail.getContext().trim().isEmpty() ? detail.getContext().trim() : "n/r");
+                row.createCell(8).setCellValue("n/r");
+                row.createCell(9).setCellValue("n/r");
+                row.createCell(10).setCellValue("n/r");
+                row.createCell(11).setCellValue("n/r");
+            }
+
+            // 2. Problemas / riesgos reportados
+            Row probRow = sheet.createRow(rowIdx++);
+            probRow.createCell(0).setCellValue(sendDate);
+            probRow.createCell(1).setCellValue(studentName);
+            probRow.createCell(2).setCellValue(studentEmail);
+            probRow.createCell(3).setCellValue(projectName);
+            probRow.createCell(4).setCellValue("Semana " + advance.getNumberWeek());
+            probRow.createCell(5).setCellValue("Problemas/riesgos reportados");
+            probRow.createCell(6).setCellValue("n/r");
+            probRow.createCell(7).setCellValue("n/r");
+            probRow.createCell(8).setCellValue(problems);
+            probRow.createCell(9).setCellValue(solution);
+            probRow.createCell(10).setCellValue("n/r");
+            probRow.createCell(11).setCellValue("n/r");
+
+            // 3. Actividades futuras planeadas
+            if (advance.getFutureAdvances() != null && !advance.getFutureAdvances().isEmpty()) {
+                for (AdvanceFuture future : advance.getFutureAdvances()) {
+                    Row futRow = sheet.createRow(rowIdx++);
+                    futRow.createCell(0).setCellValue(sendDate);
+                    futRow.createCell(1).setCellValue(studentName);
+                    futRow.createCell(2).setCellValue(studentEmail);
+                    futRow.createCell(3).setCellValue(projectName);
+                    futRow.createCell(4).setCellValue("Semana " + advance.getNumberWeek());
+                    futRow.createCell(5).setCellValue("n/r");
+                    futRow.createCell(6).setCellValue("n/r");
+                    futRow.createCell(7).setCellValue("n/r");
+                    futRow.createCell(8).setCellValue("n/r");
+                    futRow.createCell(9).setCellValue("n/r");
+                    futRow.createCell(10).setCellValue(future.getTypeAdvance() != null ? future.getTypeAdvance() : "n/r");
+                    futRow.createCell(11).setCellValue(future.getContext() != null && !future.getContext().trim().isEmpty() ? future.getContext().trim() : "n/r");
+                }
+            } else {
+                Row futRow = sheet.createRow(rowIdx++);
+                futRow.createCell(0).setCellValue(sendDate);
+                futRow.createCell(1).setCellValue(studentName);
+                futRow.createCell(2).setCellValue(studentEmail);
+                futRow.createCell(3).setCellValue(projectName);
+                futRow.createCell(4).setCellValue("Semana " + advance.getNumberWeek());
+                futRow.createCell(5).setCellValue("n/r");
+                futRow.createCell(6).setCellValue("n/r");
+                futRow.createCell(7).setCellValue("n/r");
+                futRow.createCell(8).setCellValue("n/r");
+                futRow.createCell(9).setCellValue("n/r");
+                futRow.createCell(10).setCellValue("n/r");
+                futRow.createCell(11).setCellValue("n/r");
             }
         }
 
@@ -161,51 +208,57 @@ public class ExcelService {
         headerRow.getCell(2).setCellStyle(createHeaderStyle(workbook));
         headerRow.getCell(3).setCellStyle(createHeaderStyle(workbook));
 
-        Map<String, List<Advance>> projectMap = advances.stream()
-                .collect(Collectors.groupingBy(a -> a.getProyect().getName()));
+        List<Proyect> sectionProjects = section.getProyects() != null ? section.getProyects() : new ArrayList<>();
+
+        Map<Long, List<Advance>> projectAdvancesMap = advances.stream()
+                .collect(Collectors.groupingBy(a -> a.getProyect().getId()));
+
+        Map<Long, List<Student>> projectStudentsMap = allStudents.stream()
+                .filter(s -> s.getProyect() != null)
+                .collect(Collectors.groupingBy(s -> s.getProyect().getId()));
 
         int rowIdx = 3;
-        long totalStudentsHandled = 0;
         
-        for (Map.Entry<String, List<Advance>> entry : projectMap.entrySet()) {
+        for (Proyect project : sectionProjects) {
             Row row = sheet.createRow(rowIdx++);
-            row.createCell(0).setCellValue(entry.getKey());
-            int totalHh = entry.getValue().stream()
+            row.createCell(0).setCellValue(project.getName());
+            
+            List<Advance> projAdvances = projectAdvancesMap.getOrDefault(project.getId(), new ArrayList<>());
+            List<Student> projStudents = projectStudentsMap.getOrDefault(project.getId(), new ArrayList<>());
+            
+            int totalHh = projAdvances.stream()
                     .flatMap(a -> a.getDetails().stream())
                     .mapToInt(d -> d.getHh() != null ? d.getHh() : 0)
                     .sum();
-            long studentCount = entry.getValue().stream()
-                    .map(a -> a.getStudent().getId())
-                    .distinct()
-                    .count();
+            
             row.createCell(1).setCellValue(totalHh);
-            row.createCell(2).setCellValue(studentCount);
-            row.createCell(3).setCellValue(entry.getValue().size());
-            totalStudentsHandled += studentCount;
+            row.createCell(2).setCellValue(projStudents.size());
+            row.createCell(3).setCellValue(projAdvances.size());
         }
 
-        long totalEnrolledStudents = allStudents.size();
-        long ghostCount = totalEnrolledStudents - totalStudentsHandled;
-        if (ghostCount > 0) {
+        // Students without project assigned
+        List<Student> studentsWithoutProject = allStudents.stream()
+                .filter(s -> s.getProyect() == null)
+                .collect(Collectors.toList());
+        if (!studentsWithoutProject.isEmpty()) {
             Row row = sheet.createRow(rowIdx++);
-            row.createCell(0).setCellValue("Alumnos sin reportes");
+            row.createCell(0).setCellValue("Alumnos sin proyecto asignado");
             row.createCell(1).setCellValue(0);
-            row.createCell(2).setCellValue(ghostCount);
+            row.createCell(2).setCellValue(studentsWithoutProject.size());
             row.createCell(3).setCellValue(0);
         }
 
         int maxWeek = advances.stream().mapToInt(Advance::getNumberWeek).max().orElse(1);
-        List<String> projectList = new ArrayList<>(projectMap.keySet());
         
         int chartDataRowIdx = rowIdx + 2;
         Row chartHeaderRow = sheet.createRow(chartDataRowIdx++);
         chartHeaderRow.createCell(0).setCellValue("Proyecto / Semana");
         for (int i = 1; i <= maxWeek; i++) chartHeaderRow.createCell(i).setCellValue("Sem " + i);
 
-        for (String projName : projectList) {
+        for (Proyect project : sectionProjects) {
             Row row = sheet.createRow(chartDataRowIdx++);
-            row.createCell(0).setCellValue(projName);
-            List<Advance> projAds = projectMap.get(projName);
+            row.createCell(0).setCellValue(project.getName());
+            List<Advance> projAds = projectAdvancesMap.getOrDefault(project.getId(), new ArrayList<>());
             for (int w = 1; w <= maxWeek; w++) {
                 int finalW = w;
                 int hhWeek = projAds.stream()
@@ -235,11 +288,11 @@ public class ExcelService {
 
         XDDFLineChartData data = (XDDFLineChartData) chart.createData(ChartTypes.LINE, bottomAxis, leftAxis);
 
-        for (int i = 0; i < projectList.size(); i++) {
+        for (int i = 0; i < sectionProjects.size(); i++) {
             XDDFNumericalDataSource<Double> hhSource = XDDFDataSourcesFactory.fromNumericCellRange(sheet, 
                     new CellRangeAddress(rowIdx + 3 + i, rowIdx + 3 + i, 1, maxWeek));
             XDDFLineChartData.Series series = (XDDFLineChartData.Series) data.addSeries(weeksSource, hhSource);
-            series.setTitle(projectList.get(i), null);
+            series.setTitle(sectionProjects.get(i).getName(), null);
             series.setSmooth(false);
             series.setMarkerStyle(MarkerStyle.CIRCLE);
         }
@@ -489,15 +542,19 @@ public class ExcelService {
 
         // ALUMNOS QUE NO HAN REPORTADO NADA Y SE IGNORA SU PROYECTO
         Set<String> activeEmails = advances.stream().map(a -> a.getStudent().getEmail()).collect(Collectors.toSet());
-        List<String> missingEmails = allStudents.stream()
+        List<Student> missingStudents = allStudents.stream()
                 .filter(s -> !activeEmails.contains(s.getEmail()))
-                .map(Student::getEmail)
                 .collect(Collectors.toList());
 
-        for (String email : missingEmails) {
+        for (Student student : missingStudents) {
             Row row = sheet.createRow(rowIdx++);
-            row.createCell(0).setCellValue("No se sabe a que grupo pertenece");
-            row.createCell(1).setCellValue(email);
+            String projectName = student.getProyect() != null 
+                    ? student.getProyect().getCode() + " - " + student.getProyect().getName()
+                    : "Sin proyecto asignado";
+            String studentName = student.getName() + " " + student.getLastname();
+            
+            row.createCell(0).setCellValue(projectName);
+            row.createCell(1).setCellValue(studentName);
             for (int i = 0; i < ACTIVITY_TYPES.size(); i++) {
                 row.createCell(i + 2).setCellValue(0);
             }
@@ -521,14 +578,17 @@ public class ExcelService {
         header2.createCell(ACTIVITY_TYPES.size() + 1).setCellValue("Total HH");
         header2.getCell(ACTIVITY_TYPES.size() + 1).setCellStyle(createHeaderStyle(workbook));
 
-        Map<String, List<Advance>> projectAds = advances.stream()
-                .collect(Collectors.groupingBy(a -> a.getProyect().getCode() + " - " + a.getProyect().getName()));
+        List<Proyect> sectionProjects = section.getProyects() != null ? section.getProyects() : new ArrayList<>();
+        Map<Long, List<Advance>> projectAdvancesMap = advances.stream()
+                .collect(Collectors.groupingBy(a -> a.getProyect().getId()));
 
-        for (Map.Entry<String, List<Advance>> projEntry : projectAds.entrySet()) {
+        for (Proyect project : sectionProjects) {
             Row row = sheet.createRow(rowIdx++);
-            row.createCell(0).setCellValue(projEntry.getKey());
+            String projectName = project.getCode() + " - " + project.getName();
+            row.createCell(0).setCellValue(projectName);
             
-            Map<String, Integer> hhByType = projEntry.getValue().stream()
+            List<Advance> projAdvances = projectAdvancesMap.getOrDefault(project.getId(), new ArrayList<>());
+            Map<String, Integer> hhByType = projAdvances.stream()
                     .flatMap(a -> a.getDetails().stream())
                     .collect(Collectors.groupingBy(AdvanceDetail::getTypeAdvance, Collectors.summingInt(d -> d.getHh() != null ? d.getHh() : 0)));
 
@@ -544,5 +604,16 @@ public class ExcelService {
         for (int i = 0; i < ACTIVITY_TYPES.size() + 3; i++) {
             sheet.autoSizeColumn(i);
         }
+    }
+
+    private String cleanValue(String val) {
+        if (val == null) return "n/r";
+        String clean = val.trim();
+        if (clean.isEmpty()) return "n/r";
+        String lower = clean.toLowerCase();
+        if (lower.equals("ninguno") || lower.equals("ninguna") || lower.equals("ninguno.") || lower.equals("ninguna.")) {
+            return "n/r";
+        }
+        return clean;
     }
 }

@@ -372,8 +372,8 @@ const SubirAvance = () => {
       proyect: { id: parseInt(selectedProject) },
       sendDate: new Date().toISOString(),
       numberWeek: currentWeek,
-      problem: noProblem ? 'Ninguno' : (problem || 'Ninguno'),
-      solution: noProblem ? 'Ninguna' : (solution || 'Ninguna'),
+      problem: noProblem ? 'n/r' : (problem || 'n/r'),
+      solution: noProblem ? 'n/r' : (solution || 'n/r'),
       details: selectedDetails.map(d => ({
         typeAdvance: d.type,
         context: d.context,

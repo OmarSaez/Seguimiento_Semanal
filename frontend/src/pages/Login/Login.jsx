@@ -163,6 +163,10 @@ const Login = () => {
         <div className="blob blob-1"></div>
         <div className="blob blob-2"></div>
       </div>
+
+      <div className="author-signature">
+        By Omar Sáez
+      </div>
     </div>
   );
 };

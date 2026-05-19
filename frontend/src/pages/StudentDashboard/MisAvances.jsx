@@ -147,13 +147,13 @@ const MisAvances = () => {
               <div className="advance-details-expanded">
                 <div className="divider"></div>
                 
-                {advance.problem && advance.problem !== 'Ninguno' && (
+                {advance.problem && advance.problem !== 'Ninguno' && advance.problem !== 'n/r' && (
                   <div className="problem-note" style={{ background: 'rgba(239, 68, 68, 0.03)', borderLeft: '4px solid var(--error)', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
                     <div>
                       <strong>Problema reportado:</strong>
                       <p style={{ marginTop: '4px', fontSize: '0.9rem', color: 'var(--text-main)' }}>{advance.problem}</p>
                     </div>
-                    {advance.solution && advance.solution !== 'Ninguna' && (
+                    {advance.solution && advance.solution !== 'Ninguna' && advance.solution !== 'n/r' && (
                       <div style={{ marginTop: '12px', borderTop: '1px solid rgba(239, 68, 68, 0.15)', paddingTop: '10px' }}>
                         <strong style={{ color: 'var(--success)' }}>Solución aplicada / Plan de Acción:</strong>
                         <p style={{ marginTop: '4px', fontSize: '0.9rem', color: 'var(--text-main)' }}>{advance.solution}</p>
