@@ -249,14 +249,17 @@ public class StudentService {
             return false;
         }
         java.time.LocalDate now = java.time.LocalDate.now();
-        java.time.LocalDate baseDate = section.getFinishDate() != null ? section.getFinishDate() : section.getStartDate();
-        if (baseDate != null) {
-            java.time.LocalDate limitDate = baseDate.plusMonths(1).plusDays(5);
-            if (now.isAfter(limitDate) || now.isEqual(limitDate)) {
-                section.setIsActive(false);
-                sectionRepository.save(section);
-                return false;
-            }
+        java.time.LocalDate limitDate = null;
+        if (section.getFinishDate() != null) {
+            limitDate = section.getFinishDate().plusMonths(1).plusDays(5);
+        } else if (section.getStartDate() != null) {
+            limitDate = section.getStartDate().plusWeeks(22);
+        }
+        
+        if (limitDate != null && (now.isAfter(limitDate) || now.isEqual(limitDate))) {
+            section.setIsActive(false);
+            sectionRepository.save(section);
+            return false;
         }
         return true;
     }
