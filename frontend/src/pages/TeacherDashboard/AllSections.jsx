@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BadgeCheck, BadgeAlert, Users, Calendar, UserRound, X, Mail, User, Download } from 'lucide-react';
+import { BadgeCheck, BadgeAlert, Users, Calendar, UserRound, X, Mail, User, Download, Archive } from 'lucide-react';
 import './TeacherDashboard.css';
 
 const AllSections = () => {
@@ -8,6 +8,8 @@ const AllSections = () => {
   const [loading, setLoading] = useState(true);
   const authHeader = localStorage.getItem('auth');
   const [selectedSection, setSelectedSection] = useState(null);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
     const fetchAllSections = async () => {
@@ -41,36 +43,147 @@ const AllSections = () => {
       link.remove();
     } catch (error) {
       console.error('Error downloading excel:', error);
-      alert('Error al descargar el reporte de Excel para esta sección huérfana');
+      alert('Error al descargar el reporte de Excel para esta sección');
+    }
+  };
+
+  const handleDownloadAllZip = async () => {
+    if (sections.length === 0) return;
+    try {
+      const allIds = sections.map(s => s.id);
+      const response = await axios.get(`/api/v1/reports/selected-zip`, {
+        params: { ids: allIds.join(',') },
+        headers: { 'Authorization': authHeader },
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `TodasSecciones_PINGESO.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading all zip:', error);
+      alert('Error al empaquetar todas las secciones');
+    }
+  };
+
+  const handleDownloadSelectedZip = async () => {
+    if (selectedIds.length === 0) {
+      alert('Por favor, selecciona al menos una sección para descargar.');
+      return;
+    }
+    try {
+      const response = await axios.get(`/api/v1/reports/selected-zip`, {
+        params: { ids: selectedIds.join(',') },
+        headers: { 'Authorization': authHeader },
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Reportes_Seleccionados_PINGESO.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading selected zip:', error);
+      alert('Error al descargar los reportes seleccionados');
     }
   };
 
   if (loading) return <div className="loading-state">Cargando todas las secciones...</div>;
 
-  const hasOrphanedSections = sections.some(s => !s.teacher);
-
   return (
     <div className="sections-container">
-      <header className="page-header">
-        <h2>Todas las Secciones</h2>
-        <p>Vista general de todas las secciones registradas en el sistema.</p>
+      <header className="page-header flex-between">
+        <div>
+          <h2>Todas las Secciones</h2>
+          <p>Vista general de todas las secciones registradas en el sistema.</p>
+        </div>
+        {sections.length > 0 && (
+          isSelectionMode ? (
+            <div className="flex-align-center gap-16 animate-fade-in">
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginRight: '8px' }}>
+                {selectedIds.length} seleccionados
+              </span>
+              <button 
+                className="primary-btn flex-align-center gap-8" 
+                onClick={handleDownloadSelectedZip} 
+                disabled={selectedIds.length === 0}
+                style={selectedIds.length === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+              >
+                <Download size={18} />
+                <span>Descargar Selección</span>
+              </button>
+              <button className="secondary-btn flex-align-center gap-8" onClick={() => { setIsSelectionMode(false); setSelectedIds([]); }}>
+                <X size={18} />
+                <span>Cancelar</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex-align-center gap-16">
+              <button className="secondary-btn flex-align-center gap-8" onClick={() => setIsSelectionMode(true)} title="Seleccionar secciones específicas para descargar">
+                <BadgeCheck size={18} />
+                <span>Seleccionar Excels</span>
+              </button>
+              <button className="primary-btn flex-align-center gap-8" onClick={handleDownloadAllZip} title="Empaquetar todas las secciones registradas en un '.zip'">
+                <Archive size={18} />
+                <span>Descargar todos los excel</span>
+              </button>
+            </div>
+          )
+        )}
       </header>
 
       <div className="sections-grid">
         <table className="custom-table glass animate-fade-in">
           <thead>
             <tr>
+              {isSelectionMode && (
+                <th style={{ width: '50px', textAlign: 'center' }}>
+                  <input 
+                    type="checkbox"
+                    checked={sections.length > 0 && sections.every(s => selectedIds.includes(s.id))}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds(sections.map(s => s.id));
+                      } else {
+                        setSelectedIds([]);
+                      }
+                    }}
+                    style={{ cursor: 'pointer', transform: 'scale(1.2)' }}
+                  />
+                </th>
+              )}
               <th>Docente a Cargo</th>
               <th>Código Sección</th>
               <th>Periodo (Sem/Año)</th>
               <th>Estado</th>
               <th>Total Alumnos</th>
-              {hasOrphanedSections && <th>Acciones</th>}
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {sections.map((section) => (
               <tr key={section.id}>
+                {isSelectionMode && (
+                  <td style={{ width: '50px', textAlign: 'center' }}>
+                    <input 
+                      type="checkbox"
+                      checked={selectedIds.includes(section.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds([...selectedIds, section.id]);
+                        } else {
+                          setSelectedIds(selectedIds.filter(id => id !== section.id));
+                        }
+                      }}
+                      style={{ cursor: 'pointer', transform: 'scale(1.2)' }}
+                    />
+                  </td>
+                )}
                 <td data-label="Docente">
                   <div className="teacher-cell">
                     <UserRound size={16} color="var(--primary)" />
@@ -105,22 +218,16 @@ const AllSections = () => {
                     <span>{section.students?.length || 0}</span>
                   </div>
                 </td>
-                {hasOrphanedSections && (
-                  <td data-label="Acciones">
-                    {!section.teacher ? (
-                      <button 
-                        className="icon-btn" 
-                        style={{ color: 'var(--success)' }} 
-                        onClick={() => handleDownloadExcel(section)}
-                        title="Descargar Excel (Sección sin Docente)"
-                      >
-                        <Download size={18} />
-                      </button>
-                    ) : (
-                      <span className="text-muted text-sm">-</span>
-                    )}
-                  </td>
-                )}
+                <td data-label="Acciones">
+                  <button 
+                    className="download-btn-mini" 
+                    onClick={() => handleDownloadExcel(section)}
+                    title="Descargar Excel"
+                  >
+                    <Download size={18} />
+                    <span>Excel</span>
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

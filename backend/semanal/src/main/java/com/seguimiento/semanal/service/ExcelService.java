@@ -86,6 +86,29 @@ public class ExcelService {
     }
 
     /**
+     * Empaqueta el conjunto de reportes en Excel de las secciones seleccionadas en un único archivo ZIP.
+     */
+    @PreAuthorize("hasAnyRole('ADMIN', 'HELPER')")
+    public byte[] generateSelectedSectionsZip(List<Long> sectionIds) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(baos)) {
+            for (Long sectionId : sectionIds) {
+                Optional<Section> sectionOpt = sectionRepository.findById(sectionId);
+                if (sectionOpt.isPresent()) {
+                    Section section = sectionOpt.get();
+                    byte[] excelData = generateSectionExcel(section.getId());
+                    String filename = "Reporte_AvanceSemanal_" + section.getSectionCode() + "_" + section.getSemester() + "-" + section.getYear() + ".xlsx";
+                    java.util.zip.ZipEntry zipEntry = new java.util.zip.ZipEntry(filename);
+                    zos.putNextEntry(zipEntry);
+                    zos.write(excelData);
+                    zos.closeEntry();
+                }
+            }
+        }
+        return baos.toByteArray();
+    }
+
+    /**
      * Hoja 1: Construye la tabla de reporte plano.
      * Itera por todos los avances histórios para mostrar cada Detalle por fila (Actividad v/s HH).
      */

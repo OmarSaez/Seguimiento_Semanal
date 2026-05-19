@@ -356,7 +356,7 @@ const ManageTeachers = () => {
                       style={{ cursor: 'pointer', textDecoration: 'underline', fontStyle: 'italic', color: 'var(--text-muted)' }}
                       title="Agregar ayudante"
                     >
-                      Sin asignado
+                      Sin ayudante
                     </span>
                   )}
                 </td>

@@ -61,4 +61,17 @@ public class ExcelController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    @GetMapping("/selected-zip")
+    public ResponseEntity<byte[]> downloadSelectedSectionsZip(@org.springframework.web.bind.annotation.RequestParam java.util.List<Long> ids) {
+        try {
+            byte[] data = excelService.generateSelectedSectionsZip(ids);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=ReportesSeleccionados.zip")
+                    .contentType(MediaType.parseMediaType("application/zip"))
+                    .body(data);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

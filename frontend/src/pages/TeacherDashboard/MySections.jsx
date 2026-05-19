@@ -9,6 +9,8 @@ const MySections = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const authHeader = localStorage.getItem('auth');
   const [selectedSection, setSelectedSection] = useState(null);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const handleDownloadExcel = async (section) => {
     try {
@@ -51,6 +53,30 @@ const MySections = () => {
     }
   };
 
+  const handleDownloadSelectedZip = async () => {
+    if (selectedIds.length === 0) {
+      alert('Por favor, selecciona al menos una sección para descargar.');
+      return;
+    }
+    try {
+      const response = await axios.get(`/api/v1/reports/selected-zip`, {
+        params: { ids: selectedIds.join(',') },
+        headers: { 'Authorization': authHeader },
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Reportes_Seleccionados_PINGESO.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading selected zip:', error);
+      alert('Error al descargar los reportes seleccionados');
+    }
+  };
+
   useEffect(() => {
     const fetchSections = async () => {
       try {
@@ -79,10 +105,37 @@ const MySections = () => {
           <p>Listado de cursos a tu cargo.</p>
         </div>
         {sections.length > 0 && (
-          <button className="primary-btn" onClick={handleDownloadAllZip} title="Empaquetar ambas secciones activas e inactivas en un '.zip'">
-            <Archive size={18} />
-            <span>Descargar todos los excel</span>
-          </button>
+          isSelectionMode ? (
+            <div className="flex-align-center gap-16 animate-fade-in">
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginRight: '8px' }}>
+                {selectedIds.length} seleccionados
+              </span>
+              <button 
+                className="primary-btn flex-align-center gap-8" 
+                onClick={handleDownloadSelectedZip} 
+                disabled={selectedIds.length === 0}
+                style={selectedIds.length === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+              >
+                <Download size={18} />
+                <span>Descargar Selección</span>
+              </button>
+              <button className="secondary-btn flex-align-center gap-8" onClick={() => { setIsSelectionMode(false); setSelectedIds([]); }}>
+                <X size={18} />
+                <span>Cancelar</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex-align-center gap-16">
+              <button className="secondary-btn flex-align-center gap-8" onClick={() => setIsSelectionMode(true)} title="Seleccionar secciones específicas para descargar">
+                <BadgeCheck size={18} />
+                <span>Seleccionar Excels</span>
+              </button>
+              <button className="primary-btn flex-align-center gap-8" onClick={handleDownloadAllZip} title="Empaquetar todas tus secciones en un '.zip'">
+                <Archive size={18} />
+                <span>Descargar todos los excel</span>
+              </button>
+            </div>
+          )
         )}
       </header>
 
@@ -93,6 +146,25 @@ const MySections = () => {
           <table className="custom-table glass animate-fade-in">
             <thead>
               <tr>
+                {isSelectionMode && (
+                  <th style={{ width: '50px', textAlign: 'center' }}>
+                    <input 
+                      type="checkbox"
+                      checked={sections.length > 0 && sections.filter(s => !(user.role === 'HELPER' && !s.isActive)).every(s => selectedIds.includes(s.id))}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          const eligible = sections
+                            .filter(s => !(user.role === 'HELPER' && !s.isActive))
+                            .map(s => s.id);
+                          setSelectedIds(eligible);
+                        } else {
+                          setSelectedIds([]);
+                        }
+                      }}
+                      style={{ cursor: 'pointer', transform: 'scale(1.2)' }}
+                    />
+                  </th>
+                )}
                 <th>Código Sección</th>
                 <th>Periodo (Sem/Año)</th>
                 <th>Estado</th>
@@ -108,6 +180,23 @@ const MySections = () => {
                     key={section.id} 
                     style={isHelperAndInactive ? { opacity: 0.5, filter: 'grayscale(0.8)' } : {}}
                   >
+                    {isSelectionMode && (
+                      <td style={{ width: '50px', textAlign: 'center' }}>
+                        <input 
+                          type="checkbox"
+                          checked={selectedIds.includes(section.id)}
+                          disabled={isHelperAndInactive}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedIds([...selectedIds, section.id]);
+                            } else {
+                              setSelectedIds(selectedIds.filter(id => id !== section.id));
+                            }
+                          }}
+                          style={{ cursor: isHelperAndInactive ? 'not-allowed' : 'pointer', transform: 'scale(1.2)' }}
+                        />
+                      </td>
+                    )}
                     <td className="bold" data-label="Código">{section.sectionCode}</td>
                     <td data-label="Periodo">
                       <div className="period-cell">
