@@ -23,6 +23,7 @@ public class StudentService {
         return studentRepository.findAll();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
     public Optional<Student> findById(Long id) {
         return studentRepository.findById(id);
     }

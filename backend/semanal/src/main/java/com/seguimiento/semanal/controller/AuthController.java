@@ -59,6 +59,13 @@ public class AuthController {
                 userDetails.put("sectionCode", activeStudent.getSection().getSectionCode());
                 userDetails.put("startDate", activeStudent.getSection().getStartDate());
                 userDetails.put("finishDate", activeStudent.getSection().getFinishDate());
+                if (activeStudent.getProyect() != null) {
+                    userDetails.put("proyectId", activeStudent.getProyect().getId());
+                    userDetails.put("proyectName", activeStudent.getProyect().getName());
+                } else {
+                    userDetails.put("proyectId", null);
+                    userDetails.put("proyectName", null);
+                }
             }
         }
 

@@ -16,10 +16,13 @@ const ManageProjects = () => {
   const [sections, setSections] = useState([]);
   const [selectedSection, setSelectedSection] = useState(null);
   const [projects, setProjects] = useState([]);
+  const [sectionStudents, setSectionStudents] = useState([]);
+  const [checkedStudentIds, setCheckedStudentIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [sectionSearch, setSectionSearch] = useState('');
   const [formData, setFormData] = useState({ id: null, name: '', code: '' });
+  const [viewingStudentsProject, setViewingStudentsProject] = useState(null);
 
   const authHeader = localStorage.getItem('auth');
 
@@ -57,15 +60,38 @@ const ManageProjects = () => {
   const handleSelectSection = (section) => {
     setSelectedSection(section);
     fetchProjects(section.id);
+    fetchSectionStudents(section.id);
+  };
+
+  const fetchSectionStudents = async (sectionId) => {
+    try {
+      const res = await axios.get(`/api/v1/students/section/${sectionId}`, {
+        headers: { 'Authorization': authHeader }
+      });
+      setSectionStudents(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error('Error fetching section students:', err);
+    }
   };
 
   const handleOpenModal = (project = null) => {
     if (project) {
       setFormData({ id: project.id, name: project.name, code: project.code });
+      const ids = project.students ? project.students.map(s => s.id) : [];
+      setCheckedStudentIds(ids);
     } else {
       setFormData({ id: null, name: '', code: '' });
+      setCheckedStudentIds([]);
     }
     setShowModal(true);
+  };
+
+  const handleToggleStudent = (studentId) => {
+    if (checkedStudentIds.includes(studentId)) {
+      setCheckedStudentIds(checkedStudentIds.filter(id => id !== studentId));
+    } else {
+      setCheckedStudentIds([...checkedStudentIds, studentId]);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -73,7 +99,8 @@ const ManageProjects = () => {
     const payload = {
       name: formData.name,
       code: formData.code,
-      section: { id: selectedSection.id }
+      section: { id: selectedSection.id },
+      students: checkedStudentIds.map(id => ({ id }))
     };
 
     try {
@@ -88,6 +115,7 @@ const ManageProjects = () => {
       }
       setShowModal(false);
       fetchProjects(selectedSection.id);
+      fetchSectionStudents(selectedSection.id);
     } catch (err) {
       console.error('Error saving project:', err);
       alert('Error al guardar el proyecto');
@@ -172,13 +200,14 @@ const ManageProjects = () => {
                 <tr>
                   <th>Código</th>
                   <th>Nombre del Proyecto</th>
+                  <th>Alumnos Integrantes</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {projects.length === 0 ? (
                   <tr>
-                    <td colSpan="3" style={{ textAlign: 'center', padding: '40px' }}>
+                    <td colSpan="4" style={{ textAlign: 'center', padding: '40px' }}>
                       No hay proyectos en esta sección.
                     </td>
                   </tr>
@@ -187,6 +216,45 @@ const ManageProjects = () => {
                     <tr key={p.id}>
                       <td className="bold">{p.code}</td>
                       <td>{p.name}</td>
+                      <td>
+                        {p.students && p.students.length > 0 ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setViewingStudentsProject(p); }}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              color: 'var(--primary)',
+                              fontWeight: '600',
+                              fontSize: '0.85rem',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              outline: 'none',
+                              transition: 'all 0.2s ease'
+                            }}
+                            className="dropdown-toggle-btn"
+                          >
+                            <span>Desplegar alumnos integrantes</span>
+                            <span style={{
+                              background: 'var(--primary)',
+                              color: '#fff',
+                              padding: '1px 6px',
+                              borderRadius: '10px',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold'
+                            }}>
+                              {p.students.length}
+                            </span>
+                          </button>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                            Sin alumnos asignados
+                          </span>
+                        )}
+                      </td>
                       <td>
                         <div className="flex gap-8">
                           <button className="icon-btn edit" onClick={() => handleOpenModal(p)}>
@@ -236,6 +304,54 @@ const ManageProjects = () => {
                   required
                 />
               </div>
+              <div className="form-group" style={{ marginTop: '20px' }}>
+                <label style={{ marginBottom: '8px', display: 'block' }}>Alumnos Integrantes (Selección rápida)</label>
+                {sectionStudents.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                    No hay alumnos matriculados en esta sección para asignar.
+                  </p>
+                ) : (
+                  <div className="students-checklist glass" style={{
+                    maxHeight: '180px',
+                    overflowY: 'auto',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}>
+                    {sectionStudents.map(student => {
+                      const isChecked = checkedStudentIds.includes(student.id);
+                      return (
+                        <label key={student.id} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem',
+                          color: 'var(--text-light)',
+                          userSelect: 'none'
+                        }}>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => handleToggleStudent(student.id)}
+                            style={{
+                              width: '16px',
+                              height: '16px',
+                              cursor: 'pointer',
+                              accentColor: 'var(--primary)'
+                            }}
+                          />
+                          <span>{student.name} {student.lastname} ({student.email})</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
               <div className="modal-footer">
                 <button type="button" className="secondary-btn" onClick={() => setShowModal(false)}>
                   Cancelar
@@ -245,6 +361,85 @@ const ManageProjects = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {viewingStudentsProject && (
+        <div className="modal-overlay" onClick={() => setViewingStudentsProject(null)}>
+          <div 
+            className="modal-content glass animate-slide-up" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '90%',
+              maxWidth: '420px',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: '16px',
+              padding: '24px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              color: 'var(--text-main)'
+            }}
+          >
+            <div className="modal-header" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                  Integrantes del Proyecto
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  {viewingStudentsProject.code} - {viewingStudentsProject.name}
+                </p>
+              </div>
+              <button className="close-btn" onClick={() => setViewingStudentsProject(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div style={{
+              maxHeight: '260px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              paddingRight: '4px'
+            }}>
+              {viewingStudentsProject.students.map(std => (
+                <div key={std.id} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '10px 12px',
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  fontSize: '0.92rem',
+                  color: 'var(--text-main)',
+                  textAlign: 'left'
+                }}>
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: 'var(--primary)'
+                  }}></div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontWeight: '500' }}>{std.name} {std.lastname}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{std.email}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="modal-footer" style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+              <button 
+                type="button" 
+                className="primary-btn" 
+                onClick={() => setViewingStudentsProject(null)}
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

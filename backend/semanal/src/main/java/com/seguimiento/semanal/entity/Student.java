@@ -42,7 +42,7 @@ public class Student {
     @JsonIgnoreProperties({"students", "teacher", "proyects"})
     private Section section;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_proyect", nullable = true)
     @JsonIgnoreProperties({"students", "section", "advances"})
     private Proyect proyect;

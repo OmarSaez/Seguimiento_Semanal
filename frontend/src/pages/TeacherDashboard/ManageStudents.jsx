@@ -21,6 +21,7 @@ const ManageStudents = () => {
   const [sections, setSections] = useState([]);
   const [selectedSection, setSelectedSection] = useState(null);
   const [students, setStudents] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -31,7 +32,8 @@ const ManageStudents = () => {
     id: null, 
     name: '', 
     lastname: '', 
-    email: '' 
+    email: '',
+    proyectId: ''
   });
 
   const authHeader = localStorage.getItem('auth');
@@ -70,6 +72,18 @@ const ManageStudents = () => {
   const handleSelectSection = (section) => {
     setSelectedSection(section);
     fetchStudents(section.id);
+    fetchProjects(section.id);
+  };
+
+  const fetchProjects = async (sectionId) => {
+    try {
+      const res = await axios.get(`/api/v1/proyects/section/${sectionId}`, {
+        headers: { 'Authorization': authHeader }
+      });
+      setProjects(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+    }
   };
 
   const handleOpenModal = (student = null) => {
@@ -78,10 +92,11 @@ const ManageStudents = () => {
         id: student.id, 
         name: student.name, 
         lastname: student.lastname, 
-        email: student.email 
+        email: student.email,
+        proyectId: student.proyect ? student.proyect.id.toString() : ''
       });
     } else {
-      setFormData({ id: null, name: '', lastname: '', email: '' });
+      setFormData({ id: null, name: '', lastname: '', email: '', proyectId: '' });
     }
     setShowModal(true);
   };
@@ -109,7 +124,8 @@ const ManageStudents = () => {
       name: formData.name,
       lastname: formData.lastname,
       email: formData.email,
-      section: { id: selectedSection.id } 
+      section: { id: selectedSection.id },
+      proyect: formData.proyectId ? { id: parseInt(formData.proyectId) } : null
     };
 
     try {
@@ -271,13 +287,14 @@ const ManageStudents = () => {
                 <tr>
                   <th>Nombre Completo</th>
                   <th>Correo</th>
+                  <th>Proyecto</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {students.length === 0 ? (
                   <tr>
-                    <td colSpan="3" style={{ textAlign: 'center', padding: '40px' }}>
+                    <td colSpan="4" style={{ textAlign: 'center', padding: '40px' }}>
                       No hay alumnos en esta sección.
                     </td>
                   </tr>
@@ -290,6 +307,28 @@ const ManageStudents = () => {
                           <Mail size={14} color="var(--text-muted)" />
                           {s.email}
                         </div>
+                      </td>
+                      <td>
+                        {s.proyect ? (
+                          <span className="badge-project" style={{
+                            background: 'rgba(78, 126, 255, 0.1)',
+                            color: 'var(--primary)',
+                            padding: '4px 12px',
+                            borderRadius: '6px',
+                            fontSize: '0.85rem',
+                            fontWeight: '600'
+                          }}>
+                            {s.proyect.code} - {s.proyect.name}
+                          </span>
+                        ) : (
+                          <span className="badge-unassigned" style={{
+                            color: 'var(--text-muted)',
+                            fontSize: '0.85rem',
+                            fontStyle: 'italic'
+                          }}>
+                            No asignado
+                          </span>
+                        )}
                       </td>
                       <td>
                         <div className="flex gap-8">
@@ -355,6 +394,28 @@ const ManageStudents = () => {
                   placeholder="Apellido"
                   required
                 />
+              </div>
+              <div className="form-group" style={{ marginTop: '16px' }}>
+                <label>Proyecto Asignado</label>
+                <select
+                  value={formData.proyectId}
+                  onChange={e => setFormData({ ...formData, proyectId: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--text-light)',
+                    marginTop: '8px',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="">No asignado</option>
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="modal-footer">
                 <button type="button" className="secondary-btn" onClick={() => setShowModal(false)}>

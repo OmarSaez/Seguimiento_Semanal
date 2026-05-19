@@ -27,6 +27,8 @@ const SubirAvance = () => {
   
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
+  const [studentProject, setStudentProject] = useState(null);
+  const [studentLoaded, setStudentLoaded] = useState(false);
   const [teacherName, setTeacherName] = useState(null);
   const [problem, setProblem] = useState('');
   const [noProblem, setNoProblem] = useState(true); // Por defecto "No hubo problemas" (estandarizado como NO)
@@ -88,10 +90,19 @@ const SubirAvance = () => {
 
   const fetchInitialData = async () => {
     try {
-      const resProj = await axios.get(`/api/v1/proyects/section/${user.sectionId}`, {
-        headers: { 'Authorization': authHeader }
-      });
-      setProjects(resProj.data);
+      try {
+        const resStudent = await axios.get(`/api/v1/students/${user.id}`, {
+          headers: { 'Authorization': authHeader }
+        });
+        if (resStudent.data.proyect) {
+          setStudentProject(resStudent.data.proyect);
+          setSelectedProject(resStudent.data.proyect.id.toString());
+        }
+      } catch (e) {
+        console.error("Error fetching student profile:", e);
+      } finally {
+        setStudentLoaded(true);
+      }
 
       try {
         const resSec = await axios.get(`/api/v1/sections/${user.sectionId}`, {
@@ -109,9 +120,6 @@ const SubirAvance = () => {
           headers: { 'Authorization': authHeader }
         });
         if (resAdv.data && resAdv.data.length > 0) {
-           const sorted = resAdv.data.sort((a,b) => new Date(b.sendDate) - new Date(a.sendDate));
-           setSelectedProject(sorted[0].proyect.id.toString());
-           
            const weeks = resAdv.data.map(adv => adv.numberWeek);
            setReportedWeeks(weeks);
         }
@@ -250,20 +258,43 @@ const SubirAvance = () => {
           <section className="form-section">
             <h3 className="section-title">
               <Briefcase size={20} />
-              Proyecto en el que participó
+              Proyecto asignado
             </h3>
             <div className="form-group">
-              <select 
-                value={selectedProject} 
-                onChange={(e) => setSelectedProject(e.target.value)}
-                className="custom-select"
-                required
-              >
-                <option value="">Selecciona un proyecto...</option>
-                {projects.map(p => (
-                  <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                ))}
-              </select>
+              {studentLoaded ? (
+                studentProject ? (
+                  <div className="assigned-project-box glass" style={{
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    fontWeight: '600',
+                    color: 'var(--text-light)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <Briefcase size={16} color="var(--primary)" />
+                    <span>{studentProject.code} - {studentProject.name}</span>
+                  </div>
+                ) : (
+                  <div className="assigned-project-box glass" style={{
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    background: 'rgba(239, 68, 68, 0.05)',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    fontWeight: '500',
+                    color: 'var(--error)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span>Sin proyecto asignado. Debes solicitar a tu docente que te asigne a un proyecto para poder reportar.</span>
+                  </div>
+                )
+              ) : (
+                <p style={{ color: 'var(--text-muted)' }}>Cargando información del proyecto...</p>
+              )}
             </div>
           </section>
         </div>
@@ -406,7 +437,7 @@ const SubirAvance = () => {
         </section>
 
         <div className="form-footer" style={{ marginTop: '40px' }}>
-          <button type="submit" className="primary-btn big-btn" disabled={loading || availableWeeks.filter(w => !w.isFuture && !reportedWeeks.includes(w.number)).length === 0}>
+          <button type="submit" className="primary-btn big-btn" disabled={loading || !studentProject || availableWeeks.filter(w => !w.isFuture && !reportedWeeks.includes(w.number)).length === 0}>
             {loading ? 'Enviando...' : (
               <>
                 <Send size={18} />
