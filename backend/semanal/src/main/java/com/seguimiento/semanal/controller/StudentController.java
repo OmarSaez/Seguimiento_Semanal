@@ -33,14 +33,20 @@ public class StudentController {
     }
 
     @PostMapping
-    public Student create(@RequestBody Student student) {
-        return studentService.save(student);
+    public ResponseEntity<?> create(@RequestBody Student student) {
+        try {
+            return ResponseEntity.ok(studentService.save(student));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Student> update(@PathVariable Long id, @RequestBody Student student) {
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Student student) {
         try {
             return ResponseEntity.ok(studentService.update(id, student));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
@@ -53,14 +59,14 @@ public class StudentController {
     }
 
     @PostMapping("/section/{sectionId}/upload")
-    public ResponseEntity<String> uploadStudents(@PathVariable Long sectionId, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+    public ResponseEntity<java.util.Map<String, Object>> uploadStudents(@PathVariable Long sectionId, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
         try {
-            int count = studentService.uploadStudentsFromExcel(sectionId, file);
-            return ResponseEntity.ok("Se crearon " + count + " alumnos exitosamente.");
+            java.util.Map<String, Object> result = studentService.uploadStudentsFromExcel(sectionId, file);
+            return ResponseEntity.ok(result);
         } catch (java.io.IOException e) {
-            return ResponseEntity.badRequest().body("Error al leer el archivo Excel: " + e.getMessage());
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Error al leer el archivo Excel: " + e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Ocurrió un error inesperado al procesar el archivo.");
+            return ResponseEntity.internalServerError().body(java.util.Map.of("error", "Ocurrió un error inesperado al procesar el archivo."));
         }
     }
 }

@@ -33,6 +33,7 @@ public class StudentService {
     }
 
     public Student save(Student student) {
+        validateEmail(student.getEmail());
         return studentRepository.save(student);
     }
 
@@ -40,19 +41,27 @@ public class StudentService {
         if (!studentRepository.existsById(id)) {
             throw new RuntimeException("Estudiante no encontrado");
         }
+        validateEmail(student.getEmail());
         student.setId(id);
         return studentRepository.save(student);
+    }
+
+    private void validateEmail(String email) {
+        if (email == null || !email.toLowerCase().endsWith("@usach.cl")) {
+            throw new IllegalArgumentException("El correo debe pertenecer a la institución (@usach.cl)");
+        }
     }
 
     public void deleteById(Long id) {
         studentRepository.deleteById(id);
     }
 
-    public int uploadStudentsFromExcel(Long sectionId, org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
+    public java.util.Map<String, Object> uploadStudentsFromExcel(Long sectionId, org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
         com.seguimiento.semanal.entity.Section section = new com.seguimiento.semanal.entity.Section();
         section.setId(sectionId);
 
-        int count = 0;
+        int processed = 0;
+        int total = 0;
         try (org.apache.poi.ss.usermodel.Workbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook(file.getInputStream())) {
             org.apache.poi.ss.usermodel.Sheet sheet = workbook.getSheetAt(0);
             for (org.apache.poi.ss.usermodel.Row row : sheet) {
@@ -62,6 +71,8 @@ public class StudentService {
                 if (!email.toLowerCase().contains("@usach.cl")) {
                     continue; // Skip headers or empty rows
                 }
+
+                total++;
 
                 if (studentRepository.findByEmail(email).stream()
                         .anyMatch(s -> s.getSection() != null && s.getSection().getId().equals(sectionId))) {
@@ -79,10 +90,15 @@ public class StudentService {
                 student.setSection(section);
                 
                 studentRepository.save(student);
-                count++;
+                processed++;
             }
         }
-        return count;
+        
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("processed", processed);
+        result.put("total", total);
+        result.put("message", "Se procesaron con éxito " + processed + " de " + total + " alumnos.");
+        return result;
     }
 
     private String capitalize(String str) {

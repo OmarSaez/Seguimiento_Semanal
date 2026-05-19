@@ -35,12 +35,59 @@ const ManageStudents = () => {
     email: '',
     proyectId: ''
   });
+  const [sortConfig, setSortConfig] = useState({ key: 'lastname', direction: 'asc' });
 
   const authHeader = localStorage.getItem('auth');
 
   useEffect(() => {
     fetchSections();
   }, [authHeader]);
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) return '↕';
+    return sortConfig.direction === 'asc' ? '↑' : '↓';
+  };
+
+  const sortedStudents = React.useMemo(() => {
+    let sortableStudents = [...students];
+    if (sortConfig.key) {
+      sortableStudents.sort((a, b) => {
+        let aVal = '';
+        let bVal = '';
+
+        if (sortConfig.key === 'name') {
+          aVal = a.name || '';
+          bVal = b.name || '';
+        } else if (sortConfig.key === 'lastname') {
+          aVal = a.lastname || '';
+          bVal = b.lastname || '';
+        } else if (sortConfig.key === 'email') {
+          aVal = a.email || '';
+          bVal = b.email || '';
+        } else if (sortConfig.key === 'proyect') {
+          aVal = a.proyect ? `${a.proyect.code} - ${a.proyect.name}` : 'zzz';
+          bVal = b.proyect ? `${b.proyect.code} - ${b.proyect.name}` : 'zzz';
+        }
+
+        if (aVal.toLowerCase() < bVal.toLowerCase()) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aVal.toLowerCase() > bVal.toLowerCase()) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableStudents;
+  }, [students, sortConfig]);
 
   const fetchSections = async () => {
     try {
@@ -120,6 +167,11 @@ const ManageStudents = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.email.toLowerCase().endsWith('@usach.cl')) {
+      alert('El correo del alumno debe pertenecer a la institución (@usach.cl)');
+      return;
+    }
+
     const payload = { 
       name: formData.name,
       lastname: formData.lastname,
@@ -200,7 +252,7 @@ const ManageStudents = () => {
     formData.append('file', uploadFile);
 
     try {
-      await axios.post(`/api/v1/students/section/${selectedSection.id}/upload`, formData, {
+      const res = await axios.post(`/api/v1/students/section/${selectedSection.id}/upload`, formData, {
         headers: { 
           'Authorization': authHeader,
           'Content-Type': 'multipart/form-data'
@@ -209,7 +261,7 @@ const ManageStudents = () => {
       setShowUploadModal(false);
       setUploadFile(null);
       fetchStudents(selectedSection.id);
-      alert('Alumnos cargados exitosamente');
+      alert(res.data.message || 'Alumnos cargados exitosamente');
     } catch (err) {
       console.error('Error uploading file:', err);
       alert('Error al subir el archivo Excel. Asegúrate de que los correos tengan el formato correcto.');
@@ -285,23 +337,35 @@ const ManageStudents = () => {
             <table className="custom-table table-simple glass">
               <thead>
                 <tr>
-                  <th>Nombre Completo</th>
-                  <th>Correo</th>
-                  <th>Proyecto</th>
+                  <th style={{ width: '60px', textAlign: 'center' }}>N°</th>
+                  <th onClick={() => requestSort('name')} style={{ cursor: 'pointer', userSelect: 'none' }} className="sortable-header">
+                    Nombre <span style={{ fontSize: '0.75rem', opacity: 0.8, marginLeft: '4px' }}>{getSortIcon('name')}</span>
+                  </th>
+                  <th onClick={() => requestSort('lastname')} style={{ cursor: 'pointer', userSelect: 'none' }} className="sortable-header">
+                    Apellido <span style={{ fontSize: '0.75rem', opacity: 0.8, marginLeft: '4px' }}>{getSortIcon('lastname')}</span>
+                  </th>
+                  <th onClick={() => requestSort('email')} style={{ cursor: 'pointer', userSelect: 'none' }} className="sortable-header">
+                    Correo <span style={{ fontSize: '0.75rem', opacity: 0.8, marginLeft: '4px' }}>{getSortIcon('email')}</span>
+                  </th>
+                  <th onClick={() => requestSort('proyect')} style={{ cursor: 'pointer', userSelect: 'none' }} className="sortable-header">
+                    Proyecto <span style={{ fontSize: '0.75rem', opacity: 0.8, marginLeft: '4px' }}>{getSortIcon('proyect')}</span>
+                  </th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {students.length === 0 ? (
+                {sortedStudents.length === 0 ? (
                   <tr>
-                    <td colSpan="4" style={{ textAlign: 'center', padding: '40px' }}>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '40px' }}>
                       No hay alumnos en esta sección.
                     </td>
                   </tr>
                 ) : (
-                  students.map(s => (
+                  sortedStudents.map((s, index) => (
                     <tr key={s.id}>
-                      <td className="bold">{s.name} {s.lastname}</td>
+                      <td style={{ color: 'var(--text-muted)', fontSize: '0.88rem', fontWeight: '600', textAlign: 'center' }}>{index + 1}</td>
+                      <td className="bold">{s.name}</td>
+                      <td className="bold">{s.lastname}</td>
                       <td>
                         <div className="flex-align-center gap-8">
                           <Mail size={14} color="var(--text-muted)" />
