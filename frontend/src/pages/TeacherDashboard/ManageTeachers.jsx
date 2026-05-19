@@ -45,6 +45,7 @@ const ManageTeachers = () => {
     password: ''
   });
   const [showHelperPassword, setShowHelperPassword] = useState(false);
+  const [showEmbeddedHelperPassword, setShowEmbeddedHelperPassword] = useState(false);
 
   const authHeader = localStorage.getItem('auth');
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -67,15 +68,17 @@ const ManageTeachers = () => {
   };
 
   const handleOpenModal = (teacher = null) => {
+    setShowPassword(false);
+    setShowEmbeddedHelperPassword(false);
     if (teacher) {
       const helper = teacher.helpers && teacher.helpers.length > 0 ? teacher.helpers[0] : null;
       setFormData({ 
         id: teacher.id, 
         name: teacher.name, 
         email: teacher.email,
-        password: '********',
+        password: teacher.password || '',
         helperEmail: helper ? helper.email : '',
-        helperPassword: helper ? '********' : ''
+        helperPassword: helper ? helper.password : ''
       });
     } else {
       setFormData({ id: null, name: '', email: '', password: '', helperEmail: '', helperPassword: '' });
@@ -101,8 +104,11 @@ const ManageTeachers = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const isPasswordChanged = formData.password && formData.password !== '********' && formData.password.trim() !== '';
-    const isHelperPasswordChanged = formData.helperPassword && formData.helperPassword !== '********' && formData.helperPassword.trim() !== '';
+    const originalTeacher = teachers.find(t => t.id === formData.id);
+    const originalHelper = originalTeacher && originalTeacher.helpers && originalTeacher.helpers.length > 0 ? originalTeacher.helpers[0] : null;
+
+    const isPasswordChanged = !formData.id || (formData.password && formData.password.trim() !== '' && (!originalTeacher || formData.password !== originalTeacher.password));
+    const isHelperPasswordChanged = !formData.id || (formData.helperPassword && formData.helperPassword.trim() !== '' && (!originalHelper || formData.helperPassword !== originalHelper.password));
 
     const payload = {
       name: formData.name,
@@ -185,7 +191,7 @@ const ManageTeachers = () => {
         id: helper.id,
         name: helper.name,
         email: helper.email,
-        password: ''
+        password: helper.password || ''
       });
     } else {
       setHelperFormData({
@@ -214,10 +220,14 @@ const ManageTeachers = () => {
 
   const handleHelperSubmit = async (e) => {
     e.preventDefault();
+
+    const originalHelper = selectedTeacherForHelper && selectedTeacherForHelper.helpers && selectedTeacherForHelper.helpers.length > 0 ? selectedTeacherForHelper.helpers[0] : null;
+    const isPasswordChanged = !helperFormData.id || (helperFormData.password && helperFormData.password.trim() !== '' && (!originalHelper || helperFormData.password !== originalHelper.password));
+
     const payload = {
       name: helperFormData.name,
       email: helperFormData.email,
-      password: helperFormData.password || undefined,
+      password: isPasswordChanged ? helperFormData.password.trim() : undefined,
       teacher: { id: selectedTeacherForHelper.id }
     };
 
@@ -472,11 +482,18 @@ const ManageTeachers = () => {
                   <div className="input-with-icon">
                     <Key size={16} className="input-icon" />
                     <input 
-                      type="password" 
+                      type={showEmbeddedHelperPassword ? "text" : "password"} 
                       value={formData.helperPassword}
                       onChange={e => setFormData({...formData, helperPassword: e.target.value})}
                       placeholder={formData.id ? "Mantener contraseña actual" : "Contraseña del ayudante"}
                     />
+                    <button 
+                      type="button" 
+                      className="password-toggle"
+                      onClick={() => setShowEmbeddedHelperPassword(!showEmbeddedHelperPassword)}
+                    >
+                      {showEmbeddedHelperPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
                 </div>
               </div>
