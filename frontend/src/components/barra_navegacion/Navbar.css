@@ -195,9 +195,73 @@
   transform: translateY(-2px);
 }
 
-/* Responsiveness */
-@media (max-width: 1280px) {
-  .nav-item span {
+/* Responsiveness stages */
+.nav-text-full {
+  display: inline;
+}
+
+.nav-text-stacked {
+  display: none;
+}
+
+/* 1. Stacked Layout for Intermediate Viewports (1024px to 1550px) */
+@media (min-width: 1024px) and (max-width: 1550px) {
+  .teacher-navbar .platform-name,
+  .teacher-navbar .logo-divider {
+    display: none;
+  }
+  .nav-text-full {
+    display: none;
+  }
+  .nav-text-stacked {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.2;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .stacked-part-1, .stacked-part-2 {
+    white-space: nowrap;
+  }
+  .nav-item {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 12px;
+    min-height: 52px;
+    border-radius: 8px;
+  }
+  .nav-links {
+    gap: 6px;
+  }
+}
+
+/* 2. Icons-Only Layout for Tablets (768px to 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .teacher-navbar .platform-name,
+  .teacher-navbar .logo-divider {
+    display: none;
+  }
+  .nav-text-full {
+    display: none;
+  }
+  .nav-text-stacked {
+    display: none;
+  }
+  .nav-item {
+    padding: 10px;
+    border-radius: 10px;
+    justify-content: center;
+  }
+}
+
+/* 3. Small Screens fallback */
+@media (max-width: 1023px) {
+  .nav-item span,
+  .nav-item .nav-text-full,
+  .nav-item .nav-text-stacked {
     display: none;
   }
   .nav-item {

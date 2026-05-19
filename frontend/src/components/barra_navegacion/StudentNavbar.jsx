@@ -55,6 +55,7 @@ const StudentNavbar = () => {
               <NavLink 
                 to={item.path} 
                 className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
+                title={item.name}
               >
                 {item.icon}
                 <span>{item.name}</span>

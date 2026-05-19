@@ -42,12 +42,12 @@ const Navbar = () => {
   };
 
   const navItems = [
-    { name: 'Mis Secciones', path: '/teacher/my-sections', icon: <Layers size={18} /> },
-    { name: 'Todas las Secciones', path: '/teacher/all-sections', icon: <Users size={18} /> },
-    { name: 'Crear/Editar Sección', path: '/teacher/manage-section', icon: <PlusSquare size={18} /> },
-    { name: 'Ingresar Proyectos', path: '/teacher/add-projects', icon: <FolderPlus size={18} /> },
-    { name: 'Ingresar Alumnos', path: '/teacher/add-students', icon: <UserPlus size={18} /> },
-    { name: 'Ingresar Docente', path: '/teacher/add-teacher', icon: <ShieldPlus size={18} /> },
+    { name: 'Mis Secciones', path: '/teacher/my-sections', icon: <Layers size={18} />, parts: ['Mis', 'Secciones'] },
+    { name: 'Todas las Secciones', path: '/teacher/all-sections', icon: <Users size={18} />, parts: ['Todas las', 'Secciones'] },
+    { name: 'Crear/Editar Sección', path: '/teacher/manage-section', icon: <PlusSquare size={18} />, parts: ['Crear/Editar', 'Sección'] },
+    { name: 'Ingresar Proyectos', path: '/teacher/add-projects', icon: <FolderPlus size={18} />, parts: ['Ingresar', 'Proyectos'] },
+    { name: 'Ingresar Alumnos', path: '/teacher/add-students', icon: <UserPlus size={18} />, parts: ['Ingresar', 'Alumnos'] },
+    { name: 'Ingresar Docente', path: '/teacher/add-teacher', icon: <ShieldPlus size={18} />, parts: ['Ingresar', 'Docente'] },
   ];
 
   const [scrollState, setScrollState] = useState({ left: false, right: false });
@@ -90,9 +90,14 @@ const Navbar = () => {
                 <NavLink 
                   to={item.path} 
                   className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
+                  title={item.name}
                 >
                   {item.icon}
-                  <span>{item.name}</span>
+                  <span className="nav-text-full">{item.name}</span>
+                  <div className="nav-text-stacked">
+                    <span className="stacked-part-1">{item.parts[0]}</span>
+                    <span className="stacked-part-2">{item.parts[1]}</span>
+                  </div>
                 </NavLink>
               </li>
             ))}
