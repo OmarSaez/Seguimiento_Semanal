@@ -13,7 +13,10 @@ import {
   User,
   Upload,
   UploadCloud,
-  FileSpreadsheet
+  FileSpreadsheet,
+  AlertTriangle,
+  UserCheck,
+  HelpCircle
 } from 'lucide-react';
 import './TeacherDashboard.css';
 
@@ -36,6 +39,27 @@ const ManageStudents = () => {
     proyectId: ''
   });
   const [sortConfig, setSortConfig] = useState({ key: 'lastname', direction: 'asc' });
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [conflicts, setConflicts] = useState([]);
+  const [conflictIndex, setConflictIndex] = useState(0);
+  const [resolutions, setResolutions] = useState([]);
+  const [applyToAll, setApplyToAll] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState(null);
+
+  const requestConfirm = (title, message, onConfirm, isDanger = false) => {
+    setConfirmConfig({
+      title,
+      message,
+      isDanger,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmConfig(null);
+      },
+      onCancel: () => {
+        setConfirmConfig(null);
+      }
+    });
+  };
 
   const authHeader = localStorage.getItem('auth');
 
@@ -182,33 +206,97 @@ const ManageStudents = () => {
 
     try {
       if (formData.id) {
+        // Modo Edición: Se puede guardar directamente sin validaciones de transferencia
         await axios.put(`/api/v1/students/${formData.id}`, payload, {
           headers: { 'Authorization': authHeader }
         });
+        setShowModal(false);
+        fetchStudents(selectedSection.id);
       } else {
-        await axios.post('/api/v1/students', payload, {
+        // Modo Creación: Primero validamos si ya existe el estudiante en el sistema
+        const checkRes = await axios.get(`/api/v1/students/check?email=${formData.email}&currentSectionId=${selectedSection.id}`, {
           headers: { 'Authorization': authHeader }
         });
+
+        if (checkRes.data.exists) {
+          const sData = checkRes.data;
+          if (sData.inCurrentSection) {
+            // Ya está en esta sección
+            requestConfirm(
+              'Alumno ya Inscrito',
+              'Este alumno ya está registrado en la sección actual. ¿Deseas cargar sus datos para modificarlos?',
+              () => {
+                setFormData({
+                  id: sData.student.id,
+                  name: sData.student.name,
+                  lastname: sData.student.lastname,
+                  email: sData.student.email,
+                  proyectId: sData.student.proyect ? sData.student.proyect.id.toString() : ''
+                });
+              }
+            );
+          } else {
+            // Está en otra sección
+            const warningTitle = 'Traslado de Alumno';
+            const warningMsg = sData.sectionActive 
+              ? `El alumno ya está inscrito en la sección ACTIVA "${sData.sectionCode}". ¿Deseas trasladar al alumno a la sección actual?`
+              : `El alumno está inscrito en la sección histórica/inactiva "${sData.sectionCode}". ¿Deseas trasladar al alumno a la sección actual?`;
+
+            requestConfirm(
+              warningTitle,
+              warningMsg,
+              async () => {
+                // 1. Ejecutar transferencia
+                await axios.post('/api/v1/students/transfer', {
+                  email: formData.email,
+                  targetSectionId: selectedSection.id
+                }, {
+                  headers: { 'Authorization': authHeader }
+                });
+
+                // 2. Actualizar los datos del alumno (nombre, apellido, proyecto)
+                await axios.put(`/api/v1/students/${sData.student.id}`, payload, {
+                  headers: { 'Authorization': authHeader }
+                });
+
+                setShowModal(false);
+                fetchStudents(selectedSection.id);
+                alert('Alumno trasladado y actualizado con éxito.');
+              }
+            );
+          }
+        } else {
+          // No existe, crear uno nuevo
+          await axios.post('/api/v1/students', payload, {
+            headers: { 'Authorization': authHeader }
+          });
+          setShowModal(false);
+          fetchStudents(selectedSection.id);
+        }
       }
-      setShowModal(false);
-      fetchStudents(selectedSection.id);
     } catch (err) {
       console.error('Error saving student:', err);
-      alert('Error al guardar el estudiante');
+      alert(err.response?.data || 'Error al guardar el estudiante');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('¿Estás seguro de eliminar este estudiante?')) return;
-    try {
-      await axios.delete(`/api/v1/students/${id}`, {
-        headers: { 'Authorization': authHeader }
-      });
-      fetchStudents(selectedSection.id);
-    } catch (err) {
-      console.error('Error deleting student:', err);
-      alert('No se pudo eliminar el estudiante');
-    }
+    requestConfirm(
+      'Eliminar Alumno',
+      '¿Estás seguro de que deseas eliminar permanentemente a este estudiante? Esta acción no se puede deshacer y retirará su ficha del listado.',
+      async () => {
+        try {
+          await axios.delete(`/api/v1/students/${id}`, {
+            headers: { 'Authorization': authHeader }
+          });
+          fetchStudents(selectedSection.id);
+        } catch (err) {
+          console.error('Error deleting student:', err);
+          alert('No se pudo eliminar el estudiante');
+        }
+      },
+      true // isDanger
+    );
   };
 
   const validateAndSetFile = (file) => {
@@ -248,11 +336,12 @@ const ManageStudents = () => {
     e.preventDefault();
     if (!uploadFile) return;
 
-    const formData = new FormData();
-    formData.append('file', uploadFile);
+    const fileData = new FormData();
+    fileData.append('file', uploadFile);
 
     try {
-      const res = await axios.post(`/api/v1/students/section/${selectedSection.id}/upload`, formData, {
+      setLoading(true);
+      const res = await axios.post(`/api/v1/students/section/${selectedSection.id}/upload`, fileData, {
         headers: { 
           'Authorization': authHeader,
           'Content-Type': 'multipart/form-data'
@@ -261,10 +350,105 @@ const ManageStudents = () => {
       setShowUploadModal(false);
       setUploadFile(null);
       fetchStudents(selectedSection.id);
-      alert(res.data.message || 'Alumnos cargados exitosamente');
+      
+      const { conflicts: excelConflicts, processed, message } = res.data;
+      if (excelConflicts && excelConflicts.length > 0) {
+        // Ordenar: primero los de la misma sección (isSameSection = true), luego los de otras secciones
+        const sortedConflicts = [...excelConflicts].sort((a, b) => {
+          if (a.isSameSection && !b.isSameSection) return -1;
+          if (!a.isSameSection && b.isSameSection) return 1;
+          return 0;
+        });
+        setConflicts(sortedConflicts);
+        setConflictIndex(0);
+        setResolutions([]);
+        setApplyToAll(false);
+        setShowConflictModal(true);
+        if (processed > 0) {
+          alert(`Se cargaron con éxito ${processed} alumnos nuevos. Se detectaron ${excelConflicts.length} registros repetidos en el sistema.`);
+        }
+      } else {
+        alert(message || 'Alumnos cargados exitosamente');
+      }
     } catch (err) {
       console.error('Error uploading file:', err);
       alert('Error al subir el archivo Excel. Asegúrate de que los correos tengan el formato correcto.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const executeConflictResolutions = async (allResolutions) => {
+    try {
+      setLoading(true);
+      await axios.post('/api/v1/students/resolve-conflicts', {
+        targetSectionId: selectedSection.id,
+        resolutions: allResolutions
+      }, {
+        headers: { 'Authorization': authHeader }
+      });
+      
+      setShowConflictModal(false);
+      fetchStudents(selectedSection.id);
+      
+      const replacedCount = allResolutions.filter(r => r.action === 'replace').length;
+      const skippedCount = allResolutions.filter(r => r.action === 'skip').length;
+      
+      alert(`Resolución finalizada: se reemplazaron/trasladaron ${replacedCount} alumnos y se omitieron ${skippedCount}. Los datos históricos y reportes previos se han conservado intactos.`);
+    } catch (err) {
+      console.error('Error resolving conflicts:', err);
+      alert('Ocurrió un error al procesar las resoluciones de conflictos.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResolveConflict = (action) => {
+    const currentConf = conflicts[conflictIndex];
+    const newRes = { 
+      email: currentConf.email, 
+      action: action, 
+      name: currentConf.suggestedName, 
+      lastname: currentConf.suggestedLastname 
+    };
+
+    if (applyToAll) {
+      const isSame = currentConf.isSameSection;
+      const nextResolutions = [...resolutions];
+      
+      conflicts.forEach((conf, idx) => {
+        if (idx < conflictIndex) return;
+        if (idx === conflictIndex) {
+          nextResolutions.push(newRes);
+          return;
+        }
+        if (conf.isSameSection === isSame) {
+          nextResolutions.push({
+            email: conf.email,
+            action: action,
+            name: conf.suggestedName,
+            lastname: conf.suggestedLastname
+          });
+        }
+      });
+
+      const nextDiffIndex = conflicts.findIndex((c, idx) => idx > conflictIndex && c.isSameSection !== isSame);
+      setResolutions(nextResolutions);
+      setApplyToAll(false);
+
+      if (nextDiffIndex !== -1) {
+        setConflictIndex(nextDiffIndex);
+      } else {
+        executeConflictResolutions(nextResolutions);
+      }
+    } else {
+      const nextResolutions = [...resolutions, newRes];
+      setResolutions(nextResolutions);
+      if (conflictIndex < conflicts.length - 1) {
+        setConflictIndex(conflictIndex + 1);
+      } else {
+        executeConflictResolutions(nextResolutions);
+      }
     }
   };
 
@@ -571,6 +755,254 @@ const ManageStudents = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showConflictModal && conflicts[conflictIndex] && (() => {
+        const currentConf = conflicts[conflictIndex];
+        const isSame = currentConf.isSameSection;
+        const remainingSameType = conflicts.slice(conflictIndex + 1).filter(c => c.isSameSection === isSame).length;
+
+        return (
+          <div className="modal-overlay">
+            <div className="modal-content glass animate-slide-up" style={{ maxWidth: '600px', padding: '24px' }}>
+              <div className="modal-header" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <h3 style={{ color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <AlertTriangle size={22} />
+                    {isSame ? 'Conflicto: Alumno en Sección Actual' : 'Conflicto: Alumno en Otra Sección'}
+                  </h3>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    Resolviendo {isSame ? 'duplicado' : 'traslado'} {conflictIndex + 1} de {conflicts.length}
+                  </span>
+                </div>
+                <button className="close-btn" onClick={() => setShowConflictModal(false)}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Progress Bar */}
+              <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginTop: '1px' }}>
+                <div style={{ width: `${((conflictIndex + 1) / conflicts.length) * 100}%`, height: '100%', background: 'var(--warning)', transition: 'width 0.3s ease' }}></div>
+              </div>
+              
+              <div style={{ margin: '16px 0', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                El correo <strong>{currentConf.email}</strong> ya existe en el sistema. Selecciona qué acción deseas aplicar sobre este registro.
+              </div>
+
+              {/* Collision Panels */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '16px', 
+                marginBottom: '20px' 
+              }}>
+                {/* Current in System */}
+                <div style={{ 
+                  background: 'rgba(239, 68, 68, 0.03)', 
+                  border: '1px solid rgba(239, 68, 68, 0.15)', 
+                  borderRadius: '8px', 
+                  padding: '12px 14px' 
+                }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#dc2626', textTransform: 'uppercase', marginBottom: '8px' }}>
+                    Datos en el Sistema
+                  </div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-light)', marginBottom: '4px' }}>
+                    {currentConf.name} {currentConf.lastname}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', wordBreak: 'break-all' }}>
+                    {currentConf.email}
+                  </div>
+                  <div style={{ 
+                    display: 'inline-block', 
+                    fontSize: '0.75rem', 
+                    background: 'rgba(239, 68, 68, 0.08)', 
+                    border: '1px solid rgba(239, 68, 68, 0.15)',
+                    padding: '3px 8px', 
+                    borderRadius: '4px', 
+                    color: '#dc2626',
+                    fontWeight: '600'
+                  }}>
+                    Sección: {currentConf.currentSectionCode}
+                  </div>
+                </div>
+
+                {/* Excel suggested */}
+                <div style={{ 
+                  background: 'rgba(34, 197, 94, 0.03)', 
+                  border: '1px solid rgba(34, 197, 94, 0.15)', 
+                  borderRadius: '8px', 
+                  padding: '12px 14px' 
+                }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#16a34a', textTransform: 'uppercase', marginBottom: '8px' }}>
+                    Datos Nuevos (Excel)
+                  </div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-light)', marginBottom: '4px' }}>
+                    {currentConf.suggestedName} {currentConf.suggestedLastname}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', wordBreak: 'break-all' }}>
+                    {currentConf.email}
+                  </div>
+                  <div style={{ 
+                    display: 'inline-block', 
+                    fontSize: '0.75rem', 
+                    background: 'rgba(34, 197, 94, 0.08)', 
+                    border: '1px solid rgba(34, 197, 94, 0.15)',
+                    padding: '3px 8px', 
+                    borderRadius: '4px', 
+                    color: '#16a34a',
+                    fontWeight: '600'
+                  }}>
+                    Sección: {selectedSection.sectionCode}
+                  </div>
+                </div>
+              </div>
+
+              {/* Dynamic Warning info */}
+              {isSame ? (
+                <div style={{ 
+                  padding: '12px 14px', 
+                  background: 'rgba(13, 148, 136, 0.05)', 
+                  border: '1px solid rgba(13, 148, 136, 0.15)',
+                  borderLeft: '4px solid var(--primary)', 
+                  borderRadius: '6px',
+                  color: 'var(--text-light)',
+                  fontSize: '0.82rem',
+                  lineHeight: '1.45',
+                  marginBottom: '20px'
+                }}>
+                  <strong style={{ color: 'var(--primary)', marginRight: '4px' }}>Actualización de Ficha:</strong> El alumno ya pertenece a la sección actual. Si decides reemplazar, se actualizarán su nombre y apellido en el sistema con los datos del Excel. No se modificará su proyecto asignado ni sus reportes semanales.
+                </div>
+              ) : (
+                <div style={{ 
+                  padding: '12px 14px', 
+                  background: 'rgba(59, 130, 246, 0.05)', 
+                  border: '1px solid rgba(59, 130, 246, 0.15)',
+                  borderLeft: '4px solid #2563eb', 
+                  borderRadius: '6px',
+                  color: 'var(--text-light)',
+                  fontSize: '0.82rem',
+                  lineHeight: '1.45',
+                  marginBottom: '20px'
+                }}>
+                  <strong style={{ color: '#2563eb', marginRight: '4px' }}>Traslado Seguro:</strong> El alumno pertenece a otra sección. Si decides trasladarlo, se le reubicará en la sección actual y su historial de reportes semanales anteriores se conservará intacto en su sección original.
+                </div>
+              )}
+
+              {/* Checkbox Apply to Remaining of the same category */}
+              {remainingSameType > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', cursor: 'pointer' }} onClick={() => setApplyToAll(!applyToAll)}>
+                  <input 
+                    type="checkbox"
+                    checked={applyToAll}
+                    onChange={() => {}} // handled by click
+                    style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', userSelect: 'none' }}>
+                    {isSame 
+                      ? `Aplicar esta elección a los ${remainingSameType} duplicados restantes de esta sección` 
+                      : `Aplicar esta elección a los ${remainingSameType} traslados restantes de otras secciones`}
+                  </span>
+                </div>
+              )}
+
+              {/* OS style Actions footer */}
+              <div className="modal-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button 
+                  type="button" 
+                  className="secondary-btn" 
+                  onClick={() => handleResolveConflict('skip')}
+                  style={{ minWidth: '100px' }}
+                >
+                  Omitir
+                </button>
+                
+                <button 
+                  type="button" 
+                  className="primary-btn" 
+                  onClick={() => handleResolveConflict('replace')}
+                  style={{ background: 'var(--primary)', minWidth: '180px' }}
+                >
+                  {isSame ? 'Reemplazar (Actualizar)' : 'Reemplazar / Trasladar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {confirmConfig && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content glass animate-slide-up" style={{ maxWidth: '450px', padding: '24px', textAlign: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+              <div style={{ 
+                width: '56px', 
+                height: '56px', 
+                borderRadius: '50%', 
+                background: confirmConfig.isDanger ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                color: confirmConfig.isDanger ? '#ef4444' : '#3b82f6'
+              }}>
+                {confirmConfig.isDanger ? <AlertTriangle size={28} /> : <HelpCircle size={28} />}
+              </div>
+              
+              <div style={{ width: '100%' }}>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text)' }}>
+                  {confirmConfig.title}
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-light)', lineHeight: '1.5' }}>
+                  {confirmConfig.message}
+                </p>
+              </div>
+
+              {/* Warnings style banner inside confirm dialog if transferring */}
+              {confirmConfig.title === 'Traslado de Alumno' && (
+                <div style={{ 
+                  padding: '10px 12px', 
+                  background: 'rgba(59, 130, 246, 0.05)', 
+                  border: '1px solid rgba(59, 130, 246, 0.15)',
+                  borderLeft: '4px solid #2563eb', 
+                  borderRadius: '6px',
+                  color: 'var(--text-light)',
+                  fontSize: '0.8rem',
+                  lineHeight: '1.4',
+                  textAlign: 'left',
+                  width: '100%'
+                }}>
+                  <strong style={{ color: '#2563eb', marginRight: '4px' }}>Historial Preservado:</strong> Su historial de reportes semanales anteriores se conservará intacto en su sección original.
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '12px', width: '100%', marginTop: '8px' }}>
+                <button 
+                  type="button" 
+                  className="secondary-btn" 
+                  onClick={confirmConfig.onCancel}
+                  style={{ flex: 1, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button" 
+                  className="primary-btn" 
+                  onClick={confirmConfig.onConfirm}
+                  style={{ 
+                    flex: 1, 
+                    padding: '10px', 
+                    background: confirmConfig.isDanger ? '#ef4444' : 'var(--primary)',
+                    borderColor: confirmConfig.isDanger ? '#ef4444' : 'var(--primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  Aceptar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

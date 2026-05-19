@@ -32,6 +32,60 @@ public class StudentController {
         return studentService.findBySectionId(sectionId);
     }
 
+    @GetMapping("/check")
+    public ResponseEntity<?> checkStudent(@RequestParam String email, @RequestParam(required = false) Long currentSectionId) {
+        return ResponseEntity.ok(studentService.checkStudent(email, currentSectionId));
+    }
+
+    @PostMapping("/transfer")
+    public ResponseEntity<?> transferStudents(@RequestBody java.util.Map<String, Object> request) {
+        try {
+            String email = (String) request.get("email");
+            @SuppressWarnings("unchecked")
+            List<String> emails = (List<String>) request.get("emails");
+            Number targetSectionIdNum = (Number) request.get("targetSectionId");
+            
+            if (targetSectionIdNum == null) {
+                return ResponseEntity.badRequest().body("Se requiere targetSectionId");
+            }
+            Long targetSectionId = targetSectionIdNum.longValue();
+
+            if (emails != null && !emails.isEmpty()) {
+                studentService.transferStudents(emails, targetSectionId);
+                return ResponseEntity.ok(java.util.Map.of("message", "Alumnos trasladados con éxito."));
+            } else if (email != null && !email.trim().isEmpty()) {
+                studentService.transferStudent(email, targetSectionId);
+                return ResponseEntity.ok(java.util.Map.of("message", "Alumno trasladado con éxito."));
+            } else {
+                return ResponseEntity.badRequest().body("Se requiere email o emails");
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/resolve-conflicts")
+    public ResponseEntity<?> resolveConflicts(@RequestBody java.util.Map<String, Object> request) {
+        try {
+            Number targetSectionIdNum = (Number) request.get("targetSectionId");
+            if (targetSectionIdNum == null) {
+                return ResponseEntity.badRequest().body("Se requiere targetSectionId");
+            }
+            Long targetSectionId = targetSectionIdNum.longValue();
+
+            @SuppressWarnings("unchecked")
+            List<java.util.Map<String, Object>> resolutions = (List<java.util.Map<String, Object>>) request.get("resolutions");
+            if (resolutions == null || resolutions.isEmpty()) {
+                return ResponseEntity.badRequest().body("Se requiere una lista de resoluciones");
+            }
+
+            studentService.resolveConflicts(targetSectionId, resolutions);
+            return ResponseEntity.ok(java.util.Map.of("message", "Conflictos resueltos con éxito."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Student student) {
         try {

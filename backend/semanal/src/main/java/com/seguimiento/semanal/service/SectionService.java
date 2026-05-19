@@ -15,20 +15,42 @@ public class SectionService {
 
     private final SectionRepository sectionRepository;
 
+    public void checkAndDeactivate(Section section) {
+        if (section == null) return;
+        if (section.getIsActive() != null && section.getIsActive()) {
+            java.time.LocalDate now = java.time.LocalDate.now();
+            java.time.LocalDate baseDate = section.getFinishDate() != null ? section.getFinishDate() : section.getStartDate();
+            if (baseDate != null) {
+                java.time.LocalDate limitDate = baseDate.plusMonths(1).plusDays(5);
+                if (now.isAfter(limitDate) || now.isEqual(limitDate)) {
+                    section.setIsActive(false);
+                    sectionRepository.save(section);
+                }
+            }
+        }
+    }
+
     public List<Section> findAll() {
-        return sectionRepository.findAllByOrderByYearDescSemesterDesc();
+        List<Section> list = sectionRepository.findAllByOrderByYearDescSemesterDesc();
+        list.forEach(this::checkAndDeactivate);
+        return list;
     }
 
     public List<Section> findByTeacherEmail(String email) {
-        return sectionRepository.findByTeacherEmailOrderByYearDescSemesterDesc(email);
+        List<Section> list = sectionRepository.findByTeacherEmailOrderByYearDescSemesterDesc(email);
+        list.forEach(this::checkAndDeactivate);
+        return list;
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
     public Optional<Section> findById(Long id) {
-        return sectionRepository.findById(id);
+        Optional<Section> opt = sectionRepository.findById(id);
+        opt.ifPresent(this::checkAndDeactivate);
+        return opt;
     }
 
     public Section save(Section section) {
+        checkAndDeactivate(section);
         return sectionRepository.save(section);
     }
 
