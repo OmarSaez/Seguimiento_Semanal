@@ -31,23 +31,24 @@ const Login = () => {
         }
       });
 
-      if (response.status === 200) {
-        const { roles, email: userEmail } = response.data;
-        const isAdmin = roles.includes('ROLE_ADMIN');
-
-        // Verificar que el rol coincida con lo seleccionado (opcional pero recomendado)
-        if (userRole === 'TEACHER' && !isAdmin) {
-          throw new Error('No tienes permisos de docente');
-        }
-        if (userRole === 'STUDENT' && isAdmin) {
-          throw new Error('Por favor ingresa como docente');
-        }
-
-        localStorage.setItem('auth', authHeader);
-        localStorage.setItem('user', JSON.stringify({
-          ...response.data,
-          role: isAdmin ? 'ADMIN' : 'STUDENT'
-        }));
+        if (response.status === 200) {
+          const { roles, email: userEmail } = response.data;
+          const isAdmin = roles.includes('ROLE_ADMIN');
+          const isHelper = roles.includes('ROLE_HELPER');
+  
+          // Verificar que el rol coincida con lo seleccionado (opcional pero recomendado)
+          if (userRole === 'TEACHER' && !isAdmin && !isHelper) {
+            throw new Error('No tienes permisos de docente o ayudante');
+          }
+          if (userRole === 'STUDENT' && (isAdmin || isHelper)) {
+            throw new Error('Por favor ingresa como docente o ayudante');
+          }
+  
+          localStorage.setItem('auth', authHeader);
+          localStorage.setItem('user', JSON.stringify({
+            ...response.data,
+            role: isAdmin ? 'ADMIN' : (isHelper ? 'HELPER' : 'STUDENT')
+          }));
 
         navigate('/dashboard');
       }
@@ -79,7 +80,7 @@ const Login = () => {
           <div className="logo-badge" style={{ background: 'transparent', border: 'none', width: '100%', height: 'auto', marginBottom: '24px' }}>
             <img src={usachColorLogo} alt="Logo Color" style={{ height: '90px', width: 'auto', objectFit: 'contain' }} />
           </div>
-          <h1>{userRole === null ? 'Bienvenido' : userRole === 'STUDENT' ? 'Acceso Estudiante' : 'Acceso Docente'}</h1>
+          <h1>{userRole === null ? 'Bienvenido' : userRole === 'STUDENT' ? 'Acceso Estudiante' : 'Acceso Docente o Ayudante'}</h1>
           <p>{userRole === null ? 'Selecciona tu perfil para ingresar' : 'Ingresa tus datos para continuar'}</p>
         </div>
 
@@ -95,7 +96,7 @@ const Login = () => {
               <div className="role-icon teacher">
                 <Lock size={28} />
               </div>
-              <span>Soy Docente</span>
+              <span>Soy Docente / Ayudante</span>
             </button>
           </div>
         ) : (

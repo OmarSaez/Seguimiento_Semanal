@@ -21,6 +21,7 @@ public class ExcelController {
 
     private final ExcelService excelService;
     private final SectionRepository sectionRepository;
+    private final com.seguimiento.semanal.repository.HelperRepository helperRepository;
 
     @GetMapping("/section/{sectionId}/excel")
     public ResponseEntity<byte[]> downloadSectionExcel(@PathVariable Long sectionId) {
@@ -45,7 +46,13 @@ public class ExcelController {
     @GetMapping("/teacher/excel-zip")
     public ResponseEntity<byte[]> downloadAllSectionsZip(java.security.Principal principal) {
         try {
-            byte[] data = excelService.generateAllSectionsZip(principal.getName());
+            String email = principal.getName();
+            java.util.Optional<com.seguimiento.semanal.entity.Helper> helper = helperRepository.findByEmail(email);
+            if (helper.isPresent() && helper.get().getTeacher() != null) {
+                email = helper.get().getTeacher().getEmail();
+            }
+
+            byte[] data = excelService.generateAllSectionsZip(email);
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=TodasSecciones.zip")
                     .contentType(MediaType.parseMediaType("application/zip"))

@@ -13,7 +13,8 @@ import {
   BookOpen,
   Calendar,
   Users,
-  AlertTriangle
+  AlertTriangle,
+  UserX
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import './TeacherDashboard.css';
@@ -29,8 +30,21 @@ const ManageTeachers = () => {
     id: null, 
     name: '', 
     email: '',
+    password: '',
+    helperEmail: '',
+    helperPassword: ''
+  });
+
+  // Helper integration
+  const [showHelperModal, setShowHelperModal] = useState(false);
+  const [selectedTeacherForHelper, setSelectedTeacherForHelper] = useState(null);
+  const [helperFormData, setHelperFormData] = useState({
+    id: null,
+    name: '',
+    email: '',
     password: ''
   });
+  const [showHelperPassword, setShowHelperPassword] = useState(false);
 
   const authHeader = localStorage.getItem('auth');
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -54,14 +68,17 @@ const ManageTeachers = () => {
 
   const handleOpenModal = (teacher = null) => {
     if (teacher) {
+      const helper = teacher.helpers && teacher.helpers.length > 0 ? teacher.helpers[0] : null;
       setFormData({ 
         id: teacher.id, 
         name: teacher.name, 
         email: teacher.email,
-        password: teacher.password || ''
+        password: '********',
+        helperEmail: helper ? helper.email : '',
+        helperPassword: helper ? '********' : ''
       });
     } else {
-      setFormData({ id: null, name: '', email: '', password: '' });
+      setFormData({ id: null, name: '', email: '', password: '', helperEmail: '', helperPassword: '' });
     }
     setShowModal(true);
   };
@@ -83,10 +100,18 @@ const ManageTeachers = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const isPasswordChanged = formData.password && formData.password !== '********' && formData.password.trim() !== '';
+    const isHelperPasswordChanged = formData.helperPassword && formData.helperPassword !== '********' && formData.helperPassword.trim() !== '';
+
     const payload = {
       name: formData.name,
       email: formData.email,
-      password: formData.password
+      password: isPasswordChanged ? formData.password.trim() : undefined,
+      helpers: formData.helperEmail.trim() ? [{
+        email: formData.helperEmail.trim().toLowerCase(),
+        password: isHelperPasswordChanged ? formData.helperPassword.trim() : undefined
+      }] : []
     };
 
     try {
@@ -102,7 +127,7 @@ const ManageTeachers = () => {
       
       const isSelfEditing = formData.id === currentUser.id;
       
-      if (isSelfEditing) {
+      if (isSelfEditing && isPasswordChanged) {
         setShowModal(false);
         Swal.fire({
           title: '¡Clave Actualizada!',
@@ -129,9 +154,121 @@ const ManageTeachers = () => {
       }
     } catch (err) {
       console.error('Error saving teacher:', err);
+      let errorMsg = 'No se pudo guardar el docente';
+      
+      const backendMsg = err.response?.data;
+      if (typeof backendMsg === 'string' && backendMsg.trim() !== '') {
+        errorMsg = backendMsg;
+        if (backendMsg.includes('@usach.cl')) {
+          errorMsg = 'El correo debe ser institucional @usach.cl';
+        }
+      } else if (backendMsg?.message) {
+        errorMsg = backendMsg.message;
+        if (backendMsg.message.includes('@usach.cl')) {
+          errorMsg = 'El correo debe ser institucional @usach.cl';
+        }
+      }
+      
       Swal.fire({
         title: 'Error',
-        text: 'No se pudo guardar el docente',
+        text: errorMsg,
+        icon: 'error'
+      });
+    }
+  };
+
+  const handleOpenHelperModal = (teacher) => {
+    setSelectedTeacherForHelper(teacher);
+    const helper = teacher.helpers && teacher.helpers.length > 0 ? teacher.helpers[0] : null;
+    if (helper) {
+      setHelperFormData({
+        id: helper.id,
+        name: helper.name,
+        email: helper.email,
+        password: ''
+      });
+    } else {
+      setHelperFormData({
+        id: null,
+        name: '',
+        email: '',
+        password: ''
+      });
+    }
+    setShowHelperModal(true);
+  };
+
+  const handleHelperEmailChange = (e) => {
+    const email = e.target.value;
+    const newFormData = { ...helperFormData, email };
+
+    if (email.includes('@usach.cl')) {
+      const parts = email.split('@')[0].split('.');
+      if (parts.length >= 2) {
+        const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+        newFormData.name = `${capitalize(parts[0])} ${capitalize(parts[1])} (Ayudante)`;
+      }
+    }
+    setHelperFormData(newFormData);
+  };
+
+  const handleHelperSubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      name: helperFormData.name,
+      email: helperFormData.email,
+      password: helperFormData.password || undefined,
+      teacher: { id: selectedTeacherForHelper.id }
+    };
+
+    try {
+      if (helperFormData.id) {
+        await axios.put(`/api/v1/helpers/${helperFormData.id}`, payload, {
+          headers: { 'Authorization': authHeader }
+        });
+      } else {
+        await axios.post('/api/v1/helpers', payload, {
+          headers: { 'Authorization': authHeader }
+        });
+      }
+      setShowHelperModal(false);
+      Swal.fire({
+        title: 'Éxito',
+        text: 'Ayudante guardado correctamente',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+      fetchTeachers();
+    } catch (err) {
+      console.error('Error saving helper:', err);
+      Swal.fire({
+        title: 'Error',
+        text: err.response?.data || 'No se pudo guardar el ayudante',
+        icon: 'error'
+      });
+    }
+  };
+
+  const handleRemoveHelper = async (helperId) => {
+    if (!window.confirm('¿Estás seguro de quitar el ayudante de este docente?')) return;
+    try {
+      await axios.delete(`/api/v1/helpers/${helperId}`, {
+        headers: { 'Authorization': authHeader }
+      });
+      Swal.fire({
+        title: 'Éxito',
+        text: 'Ayudante eliminado correctamente',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+      fetchTeachers();
+    } catch (err) {
+      console.error('Error deleting helper:', err);
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo eliminar el ayudante',
         icon: 'error'
       });
     }
@@ -173,6 +310,7 @@ const ManageTeachers = () => {
               <th>Nombre Completo</th>
               <th>Correo Institucional</th>
               <th>Secciones a Cargo</th>
+              <th>Ayudante</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -190,6 +328,37 @@ const ManageTeachers = () => {
                     <BookOpen size={16} />
                     <span>{t.sections?.length || 0}</span>
                   </div>
+                </td>
+                <td>
+                  {t.helpers && t.helpers.length > 0 ? (
+                    <div className="flex align-center gap-8" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minWidth: '160px' }}>
+                      <span 
+                        className="bold text-success" 
+                        onClick={() => handleOpenHelperModal(t)} 
+                        title="Editar ayudante" 
+                        style={{ cursor: 'pointer', color: 'var(--success)', textDecoration: 'underline' }}
+                      >
+                        {t.helpers[0].name.replace(' (Ayudante)', '')}
+                      </span>
+                      <button 
+                        className="icon-btn delete" 
+                        onClick={() => handleRemoveHelper(t.helpers[0].id)} 
+                        title="Quitar ayudante" 
+                        style={{ padding: '2px 6px', display: 'flex', alignItems: 'center' }}
+                      >
+                        <UserX size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <span 
+                      className="text-muted" 
+                      onClick={() => handleOpenHelperModal(t)}
+                      style={{ cursor: 'pointer', textDecoration: 'underline', fontStyle: 'italic', color: 'var(--text-muted)' }}
+                      title="Agregar ayudante"
+                    >
+                      Sin asignado
+                    </span>
+                  )}
                 </td>
                 <td>
                   <div className="flex gap-8">
@@ -261,8 +430,8 @@ const ManageTeachers = () => {
                     type={showPassword ? "text" : "password"} 
                     value={formData.password}
                     onChange={e => setFormData({...formData, password: e.target.value})}
-                    placeholder="Indica una contraseña segura"
-                    required
+                    placeholder={formData.id ? "Mantener contraseña actual" : "Indica una contraseña segura"}
+                    required={!formData.id}
                   />
                   <button 
                     type="button" 
@@ -273,6 +442,45 @@ const ManageTeachers = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Sección integrada de ayudante */}
+              <div className="helper-embedded-section" style={{
+                marginTop: '20px',
+                padding: '16px',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(255,255,255,0.02)'
+              }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--success)' }}>
+                  <UserPlus size={16} />
+                  <span>Datos del Ayudante (Opcional)</span>
+                </h4>
+                <div className="form-group">
+                  <label>Correo del Ayudante</label>
+                  <div className="input-with-icon">
+                    <Mail size={16} className="input-icon" />
+                    <input 
+                      type="email" 
+                      value={formData.helperEmail}
+                      onChange={e => setFormData({...formData, helperEmail: e.target.value})}
+                      placeholder="ayudante.ejemplo@usach.cl"
+                    />
+                  </div>
+                </div>
+                <div className="form-group" style={{ marginTop: '12px' }}>
+                  <label>Contraseña del Ayudante</label>
+                  <div className="input-with-icon">
+                    <Key size={16} className="input-icon" />
+                    <input 
+                      type="password" 
+                      value={formData.helperPassword}
+                      onChange={e => setFormData({...formData, helperPassword: e.target.value})}
+                      placeholder={formData.id ? "Mantener contraseña actual" : "Contraseña del ayudante"}
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="modal-footer">
                 <button type="button" className="secondary-btn" onClick={() => setShowModal(false)}>
                   Cancelar
@@ -364,6 +572,86 @@ const ManageTeachers = () => {
                 <div className="empty-state glass">No hay alumnos matriculados en esta sección.</div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Gestionar Ayudante */}
+      {showHelperModal && (
+        <div className="modal-overlay" style={{ zIndex: 1060 }}>
+          <div className="modal-content glass animate-slide-up">
+            <div className="modal-header">
+              <h3>{helperFormData.id ? 'Editar Ayudante' : 'Nuevo Ayudante'}</h3>
+              <button className="close-btn" onClick={() => setShowHelperModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleHelperSubmit} className="modal-form">
+              <div className="alert-warning sutil-note" style={{ marginBottom: '16px', background: 'rgba(59, 130, 246, 0.1)', borderColor: 'rgba(59, 130, 246, 0.2)', color: 'var(--primary)' }}>
+                <Users size={20} />
+                <span>
+                  Asignando ayudante para el docente: <strong>{selectedTeacherForHelper?.name}</strong>.
+                </span>
+              </div>
+              
+              <div className="form-group">
+                <label>Correo Institucional del Ayudante</label>
+                <div className="input-with-icon">
+                  <Mail size={16} className="input-icon" />
+                  <input 
+                    type="email" 
+                    value={helperFormData.email}
+                    onChange={handleHelperEmailChange}
+                    placeholder="nombre.apellido@usach.cl"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="form-group" style={{ marginTop: '16px' }}>
+                <label>Nombre Completo (Auto-completado)</label>
+                <div className="input-with-icon">
+                  <User size={16} className="input-icon" />
+                  <input 
+                    type="text" 
+                    value={helperFormData.name}
+                    onChange={e => setHelperFormData({...helperFormData, name: e.target.value})}
+                    placeholder="Ej: Juan Perez (Ayudante)"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="form-group" style={{ marginTop: '16px' }}>
+                <label>{helperFormData.id ? 'Nueva Contraseña (dejar vacío para mantener)' : 'Contraseña del Ayudante'}</label>
+                <div className="input-with-icon">
+                  <Key size={16} className="input-icon" />
+                  <input 
+                    type={showHelperPassword ? "text" : "password"} 
+                    value={helperFormData.password}
+                    onChange={e => setHelperFormData({...helperFormData, password: e.target.value})}
+                    placeholder={helperFormData.id ? "Indica contraseña sólo si deseas cambiarla" : "Indica una contraseña segura"}
+                    required={!helperFormData.id}
+                  />
+                  <button 
+                    type="button" 
+                    className="password-toggle"
+                    onClick={() => setShowHelperPassword(!showHelperPassword)}
+                  >
+                    {showHelperPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+              
+              <div className="modal-footer" style={{ marginTop: '24px' }}>
+                <button type="button" className="secondary-btn" onClick={() => setShowHelperModal(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="primary-btn">
+                  {helperFormData.id ? 'Guardar Cambios' : 'Asignar Ayudante'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

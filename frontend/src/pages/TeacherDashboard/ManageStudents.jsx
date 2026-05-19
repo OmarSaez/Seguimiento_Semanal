@@ -62,6 +62,7 @@ const ManageStudents = () => {
   };
 
   const authHeader = localStorage.getItem('auth');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
     fetchSections();
@@ -115,7 +116,8 @@ const ManageStudents = () => {
 
   const fetchSections = async () => {
     try {
-      const res = await axios.get('/api/v1/sections', {
+      const url = user.role === 'HELPER' ? `/api/v1/sections/teacher/${user.email}` : '/api/v1/sections';
+      const res = await axios.get(url, {
         headers: { 'Authorization': authHeader }
       });
       setSections(Array.isArray(res.data) ? res.data : []);
@@ -141,6 +143,9 @@ const ManageStudents = () => {
   };
 
   const handleSelectSection = (section) => {
+    if (user.role === 'HELPER' && !section.isActive) {
+      return;
+    }
     setSelectedSection(section);
     fetchStudents(section.id);
     fetchProjects(section.id);
@@ -479,18 +484,28 @@ const ManageStudents = () => {
           </div>
 
           <div className="selection-grid">
-            {filteredSections.map(s => (
-              <div key={s.id} className="selection-card glass" onClick={() => handleSelectSection(s)}>
-                <div className="card-icon">
-                  <BookOpen size={24} color="var(--primary)" />
+            {filteredSections.map(s => {
+              const isHelperAndInactive = user.role === 'HELPER' && !s.isActive;
+              return (
+                <div 
+                  key={s.id} 
+                  className={`selection-card glass ${isHelperAndInactive ? 'disabled-card' : ''}`} 
+                  onClick={() => handleSelectSection(s)}
+                  style={isHelperAndInactive ? { opacity: 0.5, filter: 'grayscale(0.8)', cursor: 'not-allowed' } : {}}
+                  title={isHelperAndInactive ? "Sección inactiva - No disponible para ayudante" : ""}
+                >
+                  <div className="card-icon">
+                    <BookOpen size={24} color={isHelperAndInactive ? "var(--text-muted)" : "var(--primary)"} />
+                  </div>
+                  <div className="card-info">
+                    <h3 style={isHelperAndInactive ? { color: 'var(--text-muted)' } : {}}>{s.sectionCode}</h3>
+                    <p>{s.semester}/{s.year} - {s.teacher?.name}</p>
+                    {isHelperAndInactive && <span style={{ fontSize: '0.75rem', color: 'var(--danger)', fontWeight: 'bold' }}>Inactivo</span>}
+                  </div>
+                  {!isHelperAndInactive && <ChevronRight size={20} className="arrow" />}
                 </div>
-                <div className="card-info">
-                  <h3>{s.sectionCode}</h3>
-                  <p>{s.semester}/{s.year} - {s.teacher?.name}</p>
-                </div>
-                <ChevronRight size={20} className="arrow" />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : (
@@ -583,9 +598,11 @@ const ManageStudents = () => {
                           <button className="icon-btn edit" onClick={() => handleOpenModal(s)}>
                             <Pencil size={18} />
                           </button>
-                          <button className="icon-btn delete" onClick={() => handleDelete(s.id)}>
-                            <Trash2 size={18} />
-                          </button>
+                          {user.role !== 'HELPER' && (
+                            <button className="icon-btn delete" onClick={() => handleDelete(s.id)}>
+                              <Trash2 size={18} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

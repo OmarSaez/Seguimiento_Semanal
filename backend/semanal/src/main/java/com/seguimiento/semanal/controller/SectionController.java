@@ -14,6 +14,7 @@ import java.util.List;
 public class SectionController {
 
     private final SectionService sectionService;
+    private final com.seguimiento.semanal.repository.HelperRepository helperRepository;
 
     @GetMapping
     public List<Section> getAll() {
@@ -22,7 +23,12 @@ public class SectionController {
 
     @GetMapping("/teacher/{email}")
     public List<Section> getByTeacher(@PathVariable String email) {
-        return sectionService.findByTeacherEmail(email);
+        String targetEmail = email;
+        java.util.Optional<com.seguimiento.semanal.entity.Helper> helper = helperRepository.findByEmail(email);
+        if (helper.isPresent() && helper.get().getTeacher() != null) {
+            targetEmail = helper.get().getTeacher().getEmail();
+        }
+        return sectionService.findByTeacherEmail(targetEmail);
     }
 
     @GetMapping("/{id}")

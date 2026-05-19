@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'HELPER')")
 public class SectionService {
 
     private final SectionRepository sectionRepository;
@@ -45,18 +45,20 @@ public class SectionService {
         return list;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STUDENT', 'HELPER')")
     public Optional<Section> findById(Long id) {
         Optional<Section> opt = sectionRepository.findById(id);
         opt.ifPresent(this::checkAndDeactivate);
         return opt;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public Section save(Section section) {
         checkAndDeactivate(section);
         return sectionRepository.save(section);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public Section update(Long id, Section sectionDetails) {
         Section existingSection = sectionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sección no encontrada"));
@@ -80,6 +82,7 @@ public class SectionService {
         return sectionRepository.save(existingSection);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteById(Long id) {
         sectionRepository.deleteById(id);
     }

@@ -14,7 +14,7 @@ import SubirAvance from './pages/StudentDashboard/SubirAvance';
 
 const DashboardRedirect = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  if (user.role === 'ADMIN') return <Navigate to="/teacher" replace />;
+  if (user.role === 'ADMIN' || user.role === 'HELPER') return <Navigate to="/teacher" replace />;
   if (user.role === 'STUDENT') return <Navigate to="/student" replace />;
   return <Navigate to="/login" replace />;
 };

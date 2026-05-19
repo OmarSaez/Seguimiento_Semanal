@@ -25,6 +25,7 @@ public class AuthController {
 
     private final TeacherRepository teacherRepository;
     private final StudentRepository studentRepository;
+    private final com.seguimiento.semanal.repository.HelperRepository helperRepository;
 
     @GetMapping("/me")
     @Transactional(readOnly = true)
@@ -43,6 +44,17 @@ public class AuthController {
             teacher.ifPresent(t -> {
                 userDetails.put("id", t.getId());
                 userDetails.put("name", t.getName());
+            });
+        } else if (roles.contains("ROLE_HELPER")) {
+            Optional<com.seguimiento.semanal.entity.Helper> helper = helperRepository.findByEmail(email);
+            helper.ifPresent(h -> {
+                userDetails.put("id", h.getId());
+                userDetails.put("name", h.getName());
+                if (h.getTeacher() != null) {
+                    userDetails.put("teacherId", h.getTeacher().getId());
+                    userDetails.put("teacherName", h.getTeacher().getName());
+                    userDetails.put("teacherEmail", h.getTeacher().getEmail());
+                }
             });
         } else if (roles.contains("ROLE_STUDENT")) {
             List<Student> students = studentRepository.findByEmail(email);

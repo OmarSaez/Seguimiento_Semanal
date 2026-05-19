@@ -39,4 +39,8 @@ public class Teacher {
     @OneToMany(mappedBy = "teacher", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     @JsonIgnoreProperties("teacher")
     private List<Section> sections;
+
+    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("teacher")
+    private List<Helper> helpers;
 }

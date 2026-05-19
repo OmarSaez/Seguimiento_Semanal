@@ -19,10 +19,15 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final TeacherRepository teacherRepository;
     private final StudentRepository studentRepository;
+    private final com.seguimiento.semanal.repository.HelperRepository helperRepository;
 
-    public CustomUserDetailsService(TeacherRepository teacherRepository, StudentRepository studentRepository) {
+    public CustomUserDetailsService(
+            TeacherRepository teacherRepository, 
+            StudentRepository studentRepository,
+            com.seguimiento.semanal.repository.HelperRepository helperRepository) {
         this.teacherRepository = teacherRepository;
         this.studentRepository = studentRepository;
+        this.helperRepository = helperRepository;
     }
 
     @Override
@@ -38,14 +43,24 @@ public class CustomUserDetailsService implements UserDetailsService {
                     .build();
         }
 
-        // Buscar en estudiantes segundo (Soporta múltiples registros para alumnos repitentes)
+        // Buscar en ayudantes segundo
+        Optional<com.seguimiento.semanal.entity.Helper> helper = helperRepository.findByEmail(email);
+        if (helper.isPresent()) {
+            return User.builder()
+                    .username(helper.get().getEmail())
+                    .password("{noop}" + helper.get().getPassword())
+                    .roles("HELPER")
+                    .build();
+        }
+
+        // Buscar en estudiantes tercero (Soporta múltiples registros para alumnos repitentes)
         List<Student> students = studentRepository.findByEmail(email);
         if (!students.isEmpty()) {
             boolean hasActiveSection = students.stream()
                     .anyMatch(s -> s.getSection() != null && Boolean.TRUE.equals(s.getSection().getIsActive()));
             
             if (!hasActiveSection) {
-                throw new UsernameNotFoundException("El alumno está registrado, pero el acceso está bloqueado porque todas sus secciones están interactivas/cerradas.");
+                throw new UsernameNotFoundException("El alumno está registrado, pero el acceso está bloqueado porque todas sus secciones están inactivas/cerradas.");
             }
 
             return User.builder()

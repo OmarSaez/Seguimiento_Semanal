@@ -2,12 +2,16 @@
 -- Uso: Ejecutar TODO el script de una vez.
 
 -- 1. Limpieza total
-TRUNCATE TABLE teacher, section, proyect, student, advance, advance_detail, advance_future RESTART IDENTITY CASCADE;
+TRUNCATE TABLE teacher, section, proyect, student, advance, advance_detail, advance_future, helper RESTART IDENTITY CASCADE;
 
 -- 2. Profesores (Pass literal test1234)
 INSERT INTO teacher (name, email, password) VALUES 
 ('Omar Saez', 'omar.saez@usach.cl', 'test1234'),
 ('Alvaro Yañez', 'alvaro.yanez@usach.cl', 'test1234');
+
+-- 2b. Ayudantes (Contraseña literal helper123)
+INSERT INTO helper (name, email, password, id_teacher) VALUES
+('Ayudante de Omar', 'ayudante.omar@usach.cl', 'helper123', 1);
 
 -- 3. Secciones
 INSERT INTO section (section_code, semester, year, id_teacher, is_active, start_date, finish_date) VALUES 

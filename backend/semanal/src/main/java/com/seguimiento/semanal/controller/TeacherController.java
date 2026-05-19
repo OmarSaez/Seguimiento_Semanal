@@ -28,16 +28,24 @@ public class TeacherController {
     }
 
     @PostMapping
-    public Teacher create(@RequestBody Teacher teacher) {
-        return teacherService.save(teacher);
+    public ResponseEntity<?> create(@RequestBody Teacher teacher) {
+        try {
+            return ResponseEntity.ok(teacherService.save(teacher));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Teacher> update(@PathVariable Long id, @RequestBody Teacher teacher) {
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Teacher teacher) {
         try {
             return ResponseEntity.ok(teacherService.update(id, teacher));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

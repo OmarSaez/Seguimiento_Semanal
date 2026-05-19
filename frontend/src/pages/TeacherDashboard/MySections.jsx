@@ -101,48 +101,63 @@ const MySections = () => {
               </tr>
             </thead>
             <tbody>
-              {sections.map((section) => (
-                <tr key={section.id}>
-                  <td className="bold" data-label="Código">{section.sectionCode}</td>
-                  <td data-label="Periodo">
-                    <div className="period-cell">
-                      <Calendar size={14} />
-                      {section.semester}/{section.year}
-                    </div>
-                  </td>
-                  <td data-label="Estado">
-                    {section.isActive ? (
-                      <span className="status-badge active">
-                        <BadgeCheck size={14} /> Activo
-                      </span>
-                    ) : (
-                      <span className="status-badge inactive">
-                        <BadgeAlert size={14} /> Inactivo
-                      </span>
-                    )}
-                  </td>
-                  <td data-label="Alumnos">
-                    <div
-                      className="count-cell clickable"
-                      onClick={() => setSelectedSection(section)}
-                      title="Ver lista de alumnos"
-                    >
-                      <Users size={16} />
-                      <span>{section.students?.length || 0}</span>
-                    </div>
-                  </td>
-                  <td data-label="Acciones">
-                    <button
-                      className="download-btn-mini"
-                      title="Descargar Reporte Excel"
-                      onClick={() => handleDownloadExcel(section)}
-                    >
-                      <Download size={18} />
-                      <span>Excel</span>
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {sections.map((section) => {
+                const isHelperAndInactive = user.role === 'HELPER' && !section.isActive;
+                return (
+                  <tr 
+                    key={section.id} 
+                    style={isHelperAndInactive ? { opacity: 0.5, filter: 'grayscale(0.8)' } : {}}
+                  >
+                    <td className="bold" data-label="Código">{section.sectionCode}</td>
+                    <td data-label="Periodo">
+                      <div className="period-cell">
+                        <Calendar size={14} />
+                        {section.semester}/{section.year}
+                      </div>
+                    </td>
+                    <td data-label="Estado">
+                      {section.isActive ? (
+                        <span className="status-badge active">
+                          <BadgeCheck size={14} /> Activo
+                        </span>
+                      ) : (
+                        <span className="status-badge inactive">
+                          <BadgeAlert size={14} /> Inactivo
+                        </span>
+                      )}
+                    </td>
+                    <td data-label="Alumnos">
+                      <div
+                        className={`count-cell ${isHelperAndInactive ? '' : 'clickable'}`}
+                        onClick={() => {
+                          if (isHelperAndInactive) return;
+                          setSelectedSection(section);
+                        }}
+                        title={isHelperAndInactive ? "Sección inactiva - No disponible para ayudante" : "Ver lista de alumnos"}
+                        style={isHelperAndInactive ? { cursor: 'not-allowed' } : {}}
+                      >
+                        <Users size={16} />
+                        <span>{section.students?.length || 0}</span>
+                      </div>
+                    </td>
+                    <td data-label="Acciones">
+                      <button
+                        className="download-btn-mini"
+                        title={isHelperAndInactive ? "Sección inactiva - No disponible para ayudante" : "Descargar Reporte Excel"}
+                        onClick={() => {
+                          if (isHelperAndInactive) return;
+                          handleDownloadExcel(section);
+                        }}
+                        disabled={isHelperAndInactive}
+                        style={isHelperAndInactive ? { cursor: 'not-allowed', opacity: 0.5, pointerEvents: 'none' } : {}}
+                      >
+                        <Download size={18} />
+                        <span>Excel</span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

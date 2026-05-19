@@ -44,7 +44,7 @@ public class ExcelService {
      * y llama de manera seriada a los sub-métodos que construyen las hojas.
      * @return El archivo binario de Excel listo para descarga.
      */
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HELPER')")
     public byte[] generateSectionExcel(Long sectionId) throws IOException {
         Section section = sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new RuntimeException("Sección no encontrada"));
@@ -67,7 +67,7 @@ public class ExcelService {
     /**
      * Empaqueta el conjunto de reportes en Excel de todas las secciones vinculadas a un Profesor en un único archivo ZIP.
      */
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HELPER')")
     public byte[] generateAllSectionsZip(String teacherEmail) throws IOException {
         List<Section> sections = sectionRepository.findByTeacherEmailOrderByYearDescSemesterDesc(teacherEmail);
         

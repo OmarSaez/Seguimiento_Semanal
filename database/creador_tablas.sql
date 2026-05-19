@@ -73,3 +73,13 @@ CREATE TABLE advance_future (
     context VARCHAR(256),
     CONSTRAINT fk_advance_future FOREIGN KEY (id_advance) REFERENCES advance(id) ON DELETE CASCADE
 );
+
+-- Tabla: helper
+CREATE TABLE helper (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    id_teacher INTEGER,
+    CONSTRAINT fk_teacher_helper FOREIGN KEY (id_teacher) REFERENCES teacher(id) ON DELETE SET NULL
+);

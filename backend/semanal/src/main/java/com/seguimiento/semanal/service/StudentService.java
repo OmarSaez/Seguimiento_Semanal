@@ -16,7 +16,7 @@ import java.util.Optional;
  */
 @Service
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'HELPER')")
 public class StudentService {
 
     private final StudentRepository studentRepository;
@@ -37,6 +37,7 @@ public class StudentService {
     }
 
     public Student save(Student student) {
+        checkSectionActiveForHelper(student.getSection());
         validateEmail(student.getEmail());
         // Verificar duplicados para evitar registros duplicados con el mismo correo
         List<Student> existing = studentRepository.findByEmail(student.getEmail().trim().toLowerCase());
@@ -48,6 +49,7 @@ public class StudentService {
     }
 
     public Student update(Long id, Student student) {
+        checkSectionActiveForHelper(student.getSection());
         if (!studentRepository.existsById(id)) {
             throw new RuntimeException("Estudiante no encontrado");
         }
@@ -57,12 +59,29 @@ public class StudentService {
         return studentRepository.save(student);
     }
 
+    private void checkSectionActiveForHelper(com.seguimiento.semanal.entity.Section section) {
+        if (section == null || section.getId() == null) return;
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            boolean isHelper = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_HELPER"));
+            if (isHelper) {
+                com.seguimiento.semanal.entity.Section sec = sectionRepository.findById(section.getId())
+                        .orElseThrow(() -> new IllegalArgumentException("Sección no encontrada"));
+                if (sec.getIsActive() == null || !sec.getIsActive()) {
+                    throw new org.springframework.security.access.AccessDeniedException("Acción denegada: La sección no está activa.");
+                }
+            }
+        }
+    }
+
     private void validateEmail(String email) {
         if (email == null || !email.toLowerCase().endsWith("@usach.cl")) {
             throw new IllegalArgumentException("El correo debe pertenecer a la institución (@usach.cl)");
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteById(Long id) {
         studentRepository.deleteById(id);
     }
@@ -103,6 +122,8 @@ public class StudentService {
         com.seguimiento.semanal.entity.Section targetSection = sectionRepository.findById(targetSectionId)
                 .orElseThrow(() -> new IllegalArgumentException("La sección de destino no existe"));
         
+        checkSectionActiveForHelper(targetSection);
+        
         Student student = students.get(0);
         
         // NO ELIMINAMOS los reportes anteriores, se conservan intactos en la base de datos como historial
@@ -127,6 +148,8 @@ public class StudentService {
     public void resolveConflicts(Long targetSectionId, List<java.util.Map<String, Object>> resolutions) {
         com.seguimiento.semanal.entity.Section targetSection = sectionRepository.findById(targetSectionId)
                 .orElseThrow(() -> new IllegalArgumentException("La sección no existe"));
+
+        checkSectionActiveForHelper(targetSection);
 
         for (java.util.Map<String, Object> res : resolutions) {
             String email = (String) res.get("email");
@@ -164,6 +187,8 @@ public class StudentService {
     public java.util.Map<String, Object> uploadStudentsFromExcel(Long sectionId, org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
         com.seguimiento.semanal.entity.Section section = sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new IllegalArgumentException("La sección no existe"));
+
+        checkSectionActiveForHelper(section);
 
         int processed = 0;
         int total = 0;
