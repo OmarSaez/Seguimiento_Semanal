@@ -645,6 +645,13 @@ public class ExcelService {
         }
     }
 
+    /**
+     * Hoja 5: Construye la pestaña "Seguimiento de Compromisos".
+     * Muestra una matriz comparativa horizontal que contrasta las actividades planificadas
+     * (comprometidas) en la semana anterior (W-1) frente a las realmente ejecutadas en la
+     * semana actual (W). Combina verticalmente las celdas de Proyecto y Alumno, desglosando
+     * los 7 tipos de actividad en filas consecutivas para una fácil auditoría visual.
+     */
     private void createCommitmentTrackingSheet(Workbook workbook, List<Advance> advances, Section section, List<Student> allStudents) {
         Sheet sheet = workbook.createSheet("Seguimiento de Compromisos");
         

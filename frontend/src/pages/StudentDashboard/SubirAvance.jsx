@@ -720,6 +720,7 @@ const SubirAvance = () => {
                             inputMode="decimal"
                             value={detail.hh}
                             onChange={(e) => {
+                              // Permite ingresar enteros o decimales. Convierte la coma a punto y previene múltiples puntos.
                               let val = e.target.value.replace(/[^0-9.,]/g, '');
                               val = val.replace(',', '.');
                               const dotIndex = val.indexOf('.');
@@ -746,12 +747,13 @@ const SubirAvance = () => {
                                 handleDetailChange(type, 'hh', '');
                                 return;
                               }
+                              // Redondea la hora ingresada al múltiplo de 0.5 más cercano (e.g. 1.2 -> 1.0, 1.3 -> 1.5)
                               let rounded = Math.round(parsed * 2) / 2;
                               if (rounded <= 0) {
-                                rounded = 0.5;
+                                rounded = 0.5; // El piso mínimo es media hora (0.5 hh)
                               }
                               if (rounded > 168) {
-                                rounded = 168;
+                                rounded = 168; // Cota máxima de horas en una semana
                               }
                               handleDetailChange(type, 'hh', rounded.toString());
                             }}
