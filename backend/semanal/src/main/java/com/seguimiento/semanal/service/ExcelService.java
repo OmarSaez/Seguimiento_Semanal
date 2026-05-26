@@ -670,17 +670,55 @@ public class ExcelService {
         if (maxWeek < 1) maxWeek = 1;
 
         // Cell styles
-        CellStyle headerStyle = createHeaderStyle(workbook);
+        CellStyle headerStyleOdd = createHeaderStyle(workbook); // BLUE_GREY
         
-        CellStyle subHeaderStyle = workbook.createCellStyle();
-        subHeaderStyle.cloneStyleFrom(headerStyle);
-        subHeaderStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-        subHeaderStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        Font subFont = workbook.createFont();
-        subFont.setBold(true);
-        subFont.setColor(IndexedColors.BLACK.getIndex());
-        subHeaderStyle.setFont(subFont);
+        CellStyle headerStyleEven = workbook.createCellStyle();
+        headerStyleEven.cloneStyleFrom(headerStyleOdd);
+        headerStyleEven.setFillForegroundColor(IndexedColors.CORNFLOWER_BLUE.getIndex());
+        headerStyleEven.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
+        CellStyle headerStyleMetadata = createHeaderStyle(workbook);
+        
+        // Actividad column header needs a medium right border to separate metadata from weekly columns
+        CellStyle headerStyleActividad = workbook.createCellStyle();
+        headerStyleActividad.cloneStyleFrom(headerStyleMetadata);
+        headerStyleActividad.setBorderRight(BorderStyle.MEDIUM);
+
+        // Subheaders
+        CellStyle subHeaderStyleOdd = workbook.createCellStyle();
+        subHeaderStyleOdd.cloneStyleFrom(headerStyleOdd);
+        subHeaderStyleOdd.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        subHeaderStyleOdd.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        Font subFontBlack = workbook.createFont();
+        subFontBlack.setBold(true);
+        subFontBlack.setColor(IndexedColors.BLACK.getIndex());
+        subHeaderStyleOdd.setFont(subFontBlack);
+        
+        CellStyle subHeaderStyleEven = workbook.createCellStyle();
+        subHeaderStyleEven.cloneStyleFrom(subHeaderStyleOdd);
+        subHeaderStyleEven.setFillForegroundColor(IndexedColors.PALE_BLUE.getIndex());
+        subHeaderStyleEven.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        subHeaderStyleEven.setFont(subFontBlack);
+
+        // Subheader separators (with MEDIUM right border)
+        CellStyle subHeaderStyleOddSep = workbook.createCellStyle();
+        subHeaderStyleOddSep.cloneStyleFrom(subHeaderStyleOdd);
+        subHeaderStyleOddSep.setBorderRight(BorderStyle.MEDIUM);
+        
+        CellStyle subHeaderStyleEvenSep = workbook.createCellStyle();
+        subHeaderStyleEvenSep.cloneStyleFrom(subHeaderStyleEven);
+        subHeaderStyleEvenSep.setBorderRight(BorderStyle.MEDIUM);
+
+        // Header separators (with MEDIUM right border)
+        CellStyle headerStyleOddSep = workbook.createCellStyle();
+        headerStyleOddSep.cloneStyleFrom(headerStyleOdd);
+        headerStyleOddSep.setBorderRight(BorderStyle.MEDIUM);
+
+        CellStyle headerStyleEvenSep = workbook.createCellStyle();
+        headerStyleEvenSep.cloneStyleFrom(headerStyleEven);
+        headerStyleEvenSep.setBorderRight(BorderStyle.MEDIUM);
+
+        // Data cell styles
         CellStyle dataStyle = workbook.createCellStyle();
         dataStyle.setWrapText(true);
         dataStyle.setVerticalAlignment(VerticalAlignment.TOP);
@@ -689,6 +727,17 @@ public class ExcelService {
         dataStyle.setBorderLeft(BorderStyle.THIN);
         dataStyle.setBorderRight(BorderStyle.THIN);
 
+        // Data style for Actividad column (with MEDIUM right border)
+        CellStyle dataStyleActividad = workbook.createCellStyle();
+        dataStyleActividad.cloneStyleFrom(dataStyle);
+        dataStyleActividad.setBorderRight(BorderStyle.MEDIUM);
+
+        // Data style for week boundaries (Realizado columns with MEDIUM right border)
+        CellStyle dataStyleWeekSeparator = workbook.createCellStyle();
+        dataStyleWeekSeparator.cloneStyleFrom(dataStyle);
+        dataStyleWeekSeparator.setBorderRight(BorderStyle.MEDIUM);
+
+        // Aligned center styles (for Proyecto and Alumno)
         CellStyle alignCenterStyle = workbook.createCellStyle();
         alignCenterStyle.cloneStyleFrom(dataStyle);
         alignCenterStyle.setAlignment(HorizontalAlignment.CENTER);
@@ -699,14 +748,14 @@ public class ExcelService {
         Row row1 = sheet.createRow(1);
 
         // Column headers
-        Cell c0 = row0.createCell(0); c0.setCellValue("Proyecto"); c0.setCellStyle(headerStyle);
-        Cell c1 = row0.createCell(1); c1.setCellValue("Alumno"); c1.setCellStyle(headerStyle);
-        Cell c2 = row0.createCell(2); c2.setCellValue("Actividad"); c2.setCellStyle(headerStyle);
+        Cell c0 = row0.createCell(0); c0.setCellValue("Proyecto"); c0.setCellStyle(headerStyleMetadata);
+        Cell c1 = row0.createCell(1); c1.setCellValue("Alumno"); c1.setCellStyle(headerStyleMetadata);
+        Cell c2 = row0.createCell(2); c2.setCellValue("Actividad"); c2.setCellStyle(headerStyleActividad);
 
         // Create empty cells in row 1 for columns 0, 1, 2
-        row1.createCell(0).setCellStyle(headerStyle);
-        row1.createCell(1).setCellStyle(headerStyle);
-        row1.createCell(2).setCellStyle(headerStyle);
+        row1.createCell(0).setCellStyle(headerStyleMetadata);
+        row1.createCell(1).setCellStyle(headerStyleMetadata);
+        row1.createCell(2).setCellStyle(headerStyleActividad);
 
         // Merge Row 0 and Row 1 vertically for columns 0, 1, 2
         sheet.addMergedRegion(new CellRangeAddress(0, 1, 0, 0));
@@ -718,11 +767,19 @@ public class ExcelService {
             int colStart = 3 + (w - 1) * 2;
             int colEnd = colStart + 1;
 
+            boolean isOdd = (w % 2 != 0);
+            CellStyle wsStart = isOdd ? headerStyleOdd : headerStyleEven;
+            CellStyle wsEnd = isOdd ? headerStyleOddSep : headerStyleEvenSep;
+            CellStyle shStart = isOdd ? subHeaderStyleOdd : subHeaderStyleEven;
+            CellStyle shEnd = isOdd ? subHeaderStyleOddSep : subHeaderStyleEvenSep;
+
             // Week label in row 0
-            Cell weekCell = row0.createCell(colStart);
-            weekCell.setCellValue("Semana " + w);
-            weekCell.setCellStyle(headerStyle);
-            row0.createCell(colEnd).setCellStyle(headerStyle);
+            Cell weekCellStart = row0.createCell(colStart);
+            weekCellStart.setCellValue("Semana " + w);
+            weekCellStart.setCellStyle(wsStart);
+
+            Cell weekCellEnd = row0.createCell(colEnd);
+            weekCellEnd.setCellStyle(wsEnd);
 
             // Merge horizontally for Semana W
             sheet.addMergedRegion(new CellRangeAddress(0, 0, colStart, colEnd));
@@ -730,11 +787,11 @@ public class ExcelService {
             // Subheaders: Comprometido and Realizado in row 1
             Cell compCell = row1.createCell(colStart);
             compCell.setCellValue("Comprometido (Planificado en Sem " + (w - 1) + ")");
-            compCell.setCellStyle(subHeaderStyle);
+            compCell.setCellStyle(shStart);
 
             Cell realCell = row1.createCell(colEnd);
             realCell.setCellValue("Realizado (Hecho en Sem " + w + ")");
-            realCell.setCellStyle(subHeaderStyle);
+            realCell.setCellStyle(shEnd);
         }
 
         // Group students by project name to avoid null or transient project references
@@ -791,7 +848,7 @@ public class ExcelService {
 
                     Cell activityCell = row.createCell(2);
                     activityCell.setCellValue(activityType);
-                    activityCell.setCellStyle(dataStyle);
+                    activityCell.setCellStyle(dataStyleActividad);
 
                     // Now populate weekly data
                     for (int w = 1; w <= maxWeek; w++) {
@@ -802,7 +859,7 @@ public class ExcelService {
                         compCell.setCellStyle(dataStyle);
 
                         Cell realCell = row.createCell(colEnd);
-                        realCell.setCellStyle(dataStyle);
+                        realCell.setCellStyle(dataStyleWeekSeparator);
 
                         // 1. Comprometido for week w: Look at week w - 1 future advances
                         if (w > 1) {
