@@ -746,7 +746,7 @@ public class ExcelService {
         // Grey background cell styles for alternating student blocks
         XSSFCellStyle dataStyleGrey = (XSSFCellStyle) workbook.createCellStyle();
         dataStyleGrey.cloneStyleFrom(dataStyle);
-        byte[] greyRgb = new byte[]{(byte) 245, (byte) 245, (byte) 245};
+        byte[] greyRgb = new byte[]{(byte) 230, (byte) 230, (byte) 230};
         dataStyleGrey.setFillForegroundColor(new XSSFColor(greyRgb, new DefaultIndexedColorMap()));
         dataStyleGrey.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
