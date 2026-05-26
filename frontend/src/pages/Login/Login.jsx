@@ -54,9 +54,15 @@ const Login = () => {
       }
     } catch (err) {
       console.error('Error de login:', err);
-      setError(err.message === 'No tienes permisos de docente' || err.message === 'Por favor ingresa como docente'
-        ? err.message
-        : 'Credenciales incorrectas o usuario no registrado');
+      if (
+        err.message === 'No tienes permisos de docente o ayudante' || 
+        err.message === 'Por favor ingresa como docente o ayudante' || 
+        err.response?.status === 401
+      ) {
+        setError('Credenciales incorrectas o usuario no registrado');
+      } else {
+        setError('Error al conectar con el servidor. Inténtalo más tarde.');
+      }
     } finally {
       setLoading(false);
     }
