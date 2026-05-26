@@ -16,7 +16,8 @@ import {
   FileSpreadsheet,
   AlertTriangle,
   UserCheck,
-  HelpCircle
+  HelpCircle,
+  CheckCircle
 } from 'lucide-react';
 import './TeacherDashboard.css';
 
@@ -45,6 +46,26 @@ const ManageStudents = () => {
   const [resolutions, setResolutions] = useState([]);
   const [applyToAll, setApplyToAll] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState(null);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [activeSummaryTab, setActiveSummaryTab] = useState('invalid');
+  const [summaryData, setSummaryData] = useState({
+    total: 0,
+    processed: 0,
+    replaced: 0,
+    skipped: 0,
+    invalidEmails: [],
+    processedEmails: [],
+    replacedEmails: [],
+    skippedEmails: [],
+    message: ''
+  });
+  const [pendingSummary, setPendingSummary] = useState({
+    total: 0,
+    processed: 0,
+    invalidEmails: [],
+    processedEmails: [],
+    message: ''
+  });
 
   const requestConfirm = (title, message, onConfirm, isDanger = false) => {
     setConfirmConfig({
@@ -356,7 +377,19 @@ const ManageStudents = () => {
       setUploadFile(null);
       fetchStudents(selectedSection.id);
       
-      const { conflicts: excelConflicts, processed, message } = res.data;
+      const { conflicts: excelConflicts, processed, message, invalidEmails, processedEmails, total } = res.data;
+      
+      setPendingSummary({
+        total: total || 0,
+        processed,
+        invalidEmails: invalidEmails || [],
+        processedEmails: processedEmails || [],
+        message
+      });
+
+      const defaultTab = (invalidEmails && invalidEmails.length > 0) ? 'invalid' : 'new';
+      setActiveSummaryTab(defaultTab);
+
       if (excelConflicts && excelConflicts.length > 0) {
         // Ordenar: primero los de la misma sección (isSameSection = true), luego los de otras secciones
         const sortedConflicts = [...excelConflicts].sort((a, b) => {
@@ -369,11 +402,19 @@ const ManageStudents = () => {
         setResolutions([]);
         setApplyToAll(false);
         setShowConflictModal(true);
-        if (processed > 0) {
-          alert(`Se cargaron con éxito ${processed} alumnos nuevos. Se detectaron ${excelConflicts.length} registros repetidos en el sistema.`);
-        }
       } else {
-        alert(message || 'Alumnos cargados exitosamente');
+        setSummaryData({
+          total: total || 0,
+          processed,
+          replaced: 0,
+          skipped: 0,
+          invalidEmails: invalidEmails || [],
+          processedEmails: processedEmails || [],
+          replacedEmails: [],
+          skippedEmails: [],
+          message: 'Carga de alumnos finalizada con éxito.'
+        });
+        setShowSummaryModal(true);
       }
     } catch (err) {
       console.error('Error uploading file:', err);
@@ -396,10 +437,24 @@ const ManageStudents = () => {
       setShowConflictModal(false);
       fetchStudents(selectedSection.id);
       
-      const replacedCount = allResolutions.filter(r => r.action === 'replace').length;
-      const skippedCount = allResolutions.filter(r => r.action === 'skip').length;
+      const replacedResolutions = allResolutions.filter(r => r.action === 'replace');
+      const skippedResolutions = allResolutions.filter(r => r.action === 'skip');
       
-      alert(`Resolución finalizada: se reemplazaron/trasladaron ${replacedCount} alumnos y se omitieron ${skippedCount}. Los datos históricos y reportes previos se han conservado intactos.`);
+      const defaultTab = (pendingSummary.invalidEmails && pendingSummary.invalidEmails.length > 0) ? 'invalid' : 'new';
+      setActiveSummaryTab(defaultTab);
+
+      setSummaryData({
+        total: pendingSummary.total,
+        processed: pendingSummary.processed,
+        replaced: replacedResolutions.length,
+        skipped: skippedResolutions.length,
+        invalidEmails: pendingSummary.invalidEmails,
+        processedEmails: pendingSummary.processedEmails,
+        replacedEmails: replacedResolutions,
+        skippedEmails: skippedResolutions,
+        message: 'Resolución de conflictos y carga finalizada con éxito.'
+      });
+      setShowSummaryModal(true);
     } catch (err) {
       console.error('Error resolving conflicts:', err);
       alert('Ocurrió un error al procesar las resoluciones de conflictos.');
@@ -414,7 +469,9 @@ const ManageStudents = () => {
       email: currentConf.email, 
       action: action, 
       name: currentConf.suggestedName, 
-      lastname: currentConf.suggestedLastname 
+      lastname: currentConf.suggestedLastname,
+      isSameSection: currentConf.isSameSection,
+      currentSectionCode: currentConf.currentSectionCode
     };
 
     if (applyToAll) {
@@ -432,7 +489,9 @@ const ManageStudents = () => {
             email: conf.email,
             action: action,
             name: conf.suggestedName,
-            lastname: conf.suggestedLastname
+            lastname: conf.suggestedLastname,
+            isSameSection: conf.isSameSection,
+            currentSectionCode: conf.currentSectionCode
           });
         }
       });
@@ -825,7 +884,7 @@ const ManageStudents = () => {
                   <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#dc2626', textTransform: 'uppercase', marginBottom: '8px' }}>
                     Datos en el Sistema
                   </div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-light)', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
                     {currentConf.name} {currentConf.lastname}
                   </div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', wordBreak: 'break-all' }}>
@@ -855,7 +914,7 @@ const ManageStudents = () => {
                   <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#16a34a', textTransform: 'uppercase', marginBottom: '8px' }}>
                     Datos Nuevos (Excel)
                   </div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-light)', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
                     {currentConf.suggestedName} {currentConf.suggestedLastname}
                   </div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', wordBreak: 'break-all' }}>
@@ -884,7 +943,7 @@ const ManageStudents = () => {
                   border: '1px solid rgba(13, 148, 136, 0.15)',
                   borderLeft: '4px solid var(--primary)', 
                   borderRadius: '6px',
-                  color: 'var(--text-light)',
+                  color: 'var(--text-main)',
                   fontSize: '0.82rem',
                   lineHeight: '1.45',
                   marginBottom: '20px'
@@ -898,7 +957,7 @@ const ManageStudents = () => {
                   border: '1px solid rgba(59, 130, 246, 0.15)',
                   borderLeft: '4px solid #2563eb', 
                   borderRadius: '6px',
-                  color: 'var(--text-light)',
+                  color: 'var(--text-main)',
                   fontSize: '0.82rem',
                   lineHeight: '1.45',
                   marginBottom: '20px'
@@ -941,7 +1000,7 @@ const ManageStudents = () => {
                   onClick={() => handleResolveConflict('replace')}
                   style={{ background: 'var(--primary)', minWidth: '180px' }}
                 >
-                  {isSame ? 'Reemplazar (Actualizar)' : 'Reemplazar / Trasladar'}
+                  {isSame ? 'Reemplazar (Actualizar)' : 'Trasladar'}
                 </button>
               </div>
             </div>
@@ -970,7 +1029,7 @@ const ManageStudents = () => {
                 <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text)' }}>
                   {confirmConfig.title}
                 </h3>
-                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-light)', lineHeight: '1.5' }}>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
                   {confirmConfig.message}
                 </p>
               </div>
@@ -983,7 +1042,7 @@ const ManageStudents = () => {
                   border: '1px solid rgba(59, 130, 246, 0.15)',
                   borderLeft: '4px solid #2563eb', 
                   borderRadius: '6px',
-                  color: 'var(--text-light)',
+                  color: 'var(--text-main)',
                   fontSize: '0.8rem',
                   lineHeight: '1.4',
                   textAlign: 'left',
@@ -1019,6 +1078,235 @@ const ManageStudents = () => {
                   Aceptar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSummaryModal && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content glass animate-slide-up" style={{ maxWidth: '680px', padding: '24px' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle size={24} color="var(--success)" />
+                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text)' }}>
+                  Resumen del Proceso
+                </h3>
+              </div>
+              <button className="close-btn" onClick={() => setShowSummaryModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ 
+              background: 'rgba(0, 164, 153, 0.03)', 
+              border: '1px solid rgba(0, 164, 153, 0.15)', 
+              borderRadius: '8px', 
+              padding: '12px 16px', 
+              marginBottom: '20px', 
+              fontSize: '0.9rem',
+              color: 'var(--text-main)',
+              lineHeight: '1.5'
+            }}>
+              Se procesaron un total de <strong style={{ color: 'var(--primary)', fontSize: '1rem' }}>{summaryData.total}</strong> correos desde el archivo subido. 
+              Haz clic en cualquiera de las tarjetas de abajo para ver la lista detallada de correos correspondientes.
+            </div>
+
+            {/* Metrics Grid */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(2, 1fr)', 
+              gap: '12px', 
+              marginBottom: '20px' 
+            }}>
+              {/* Processed/New */}
+              <div 
+                onClick={() => setActiveSummaryTab('new')}
+                style={{ 
+                  background: 'rgba(78, 126, 255, 0.03)', 
+                  border: activeSummaryTab === 'new' ? '2px solid var(--primary)' : '1px solid rgba(78, 126, 255, 0.15)', 
+                  borderRadius: '8px', 
+                  padding: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  transform: activeSummaryTab === 'new' ? 'scale(1.02)' : 'none',
+                  boxShadow: activeSummaryTab === 'new' ? '0 4px 12px rgba(0, 164, 153, 0.1)' : 'none'
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '600' }}>
+                  Alumnos Nuevos Cargados
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)', marginTop: '4px' }}>
+                  {summaryData.processed}
+                </div>
+              </div>
+
+              {/* Replaced/Transferred */}
+              <div 
+                onClick={() => setActiveSummaryTab('replaced')}
+                style={{ 
+                  background: 'rgba(234, 179, 8, 0.03)', 
+                  border: activeSummaryTab === 'replaced' ? '2px solid var(--warning)' : '1px solid rgba(234, 179, 8, 0.15)', 
+                  borderRadius: '8px', 
+                  padding: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  transform: activeSummaryTab === 'replaced' ? 'scale(1.02)' : 'none',
+                  boxShadow: activeSummaryTab === 'replaced' ? '0 4px 12px rgba(234, 179, 8, 0.1)' : 'none'
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '600' }}>
+                  Actualizados / Trasladados
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--warning)', marginTop: '4px' }}>
+                  {summaryData.replaced}
+                </div>
+              </div>
+
+              {/* Omitted/Skipped */}
+              <div 
+                onClick={() => setActiveSummaryTab('skipped')}
+                style={{ 
+                  background: 'rgba(255, 255, 255, 0.01)', 
+                  border: activeSummaryTab === 'skipped' ? '2px solid var(--text-muted)' : '1px solid var(--border)', 
+                  borderRadius: '8px', 
+                  padding: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  transform: activeSummaryTab === 'skipped' ? 'scale(1.02)' : 'none',
+                  boxShadow: activeSummaryTab === 'skipped' ? '0 4px 12px rgba(255, 255, 255, 0.05)' : 'none'
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '600' }}>
+                  Omitidos
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-main)', marginTop: '4px' }}>
+                  {summaryData.skipped}
+                </div>
+              </div>
+
+              {/* Invalid Emails count */}
+              <div 
+                onClick={() => setActiveSummaryTab('invalid')}
+                style={{ 
+                  background: summaryData.invalidEmails.length > 0 ? 'rgba(239, 68, 68, 0.03)' : 'rgba(255, 255, 255, 0.01)', 
+                  border: activeSummaryTab === 'invalid' ? '2px solid #ef4444' : (summaryData.invalidEmails.length > 0 ? '1px solid rgba(239, 68, 68, 0.15)' : '1px solid var(--border)'), 
+                  borderRadius: '8px', 
+                  padding: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  transform: activeSummaryTab === 'invalid' ? 'scale(1.02)' : 'none',
+                  boxShadow: activeSummaryTab === 'invalid' ? '0 4px 12px rgba(239, 68, 68, 0.1)' : 'none'
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '600' }}>
+                  Correos con Formato Inválido
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: summaryData.invalidEmails.length > 0 ? '#ef4444' : 'var(--text-main)', marginTop: '4px' }}>
+                  {summaryData.invalidEmails.length}
+                </div>
+              </div>
+            </div>
+
+            {/* Dynamic List Section */}
+            {(() => {
+              const tabDetails = {
+                new: {
+                  title: 'Correos cargados exitosamente como nuevos alumnos:',
+                  emails: summaryData.processedEmails || [],
+                  color: 'var(--primary)',
+                  type: 'simple'
+                },
+                replaced: {
+                  title: 'Correos de alumnos actualizados o trasladados:',
+                  emails: summaryData.replacedEmails || [],
+                  color: 'var(--warning)',
+                  type: 'resolved'
+                },
+                skipped: {
+                  title: 'Correos de duplicados o traslados omitidos:',
+                  emails: summaryData.skippedEmails || [],
+                  color: 'var(--text-muted)',
+                  type: 'skipped'
+                },
+                invalid: {
+                  title: 'Correos omitidos por no ser @usach.cl o tener errores de formato:',
+                  emails: summaryData.invalidEmails || [],
+                  color: '#ef4444',
+                  type: 'simple'
+                }
+              }[activeSummaryTab] || { title: '', emails: [], color: 'var(--text-muted)', type: 'simple' };
+
+              return (
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 'bold', color: tabDetails.color, textTransform: 'uppercase', marginBottom: '8px' }}>
+                    {tabDetails.title} ({tabDetails.emails.length})
+                  </div>
+                  <div style={{ 
+                    maxHeight: '220px', 
+                    overflowY: 'auto', 
+                    background: 'var(--bg-dark)', 
+                    border: '1px solid var(--border)',
+                    borderRadius: '6px', 
+                    padding: '8px 12px',
+                    fontFamily: 'monospace',
+                    fontSize: '0.85rem',
+                    color: 'var(--text-main)',
+                    textAlign: 'left'
+                  }}>
+                    {tabDetails.emails.length === 0 ? (
+                      <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', padding: '4px 0' }}>
+                        No hay correos en esta categoría.
+                      </div>
+                    ) : (
+                      tabDetails.emails.map((item, idx) => {
+                        const isLast = idx < tabDetails.emails.length - 1;
+                        const borderStyle = { padding: '4px 0', borderBottom: isLast ? '1px solid var(--border)' : 'none' };
+                        
+                        if (tabDetails.type === 'resolved') {
+                          return (
+                            <div key={idx} style={borderStyle}>
+                              • {item.isSameSection ? (
+                                <span>[Actualización] <strong>{item.email}</strong></span>
+                              ) : (
+                                <span>[Traslado] <strong>{item.email}</strong> (desde Sección: <em>{item.currentSectionCode}</em>)</span>
+                              )}
+                            </div>
+                          );
+                        } else if (tabDetails.type === 'skipped') {
+                          return (
+                            <div key={idx} style={borderStyle}>
+                              • {item.isSameSection ? (
+                                <span>[Omitido - Actualización] <strong>{item.email}</strong></span>
+                              ) : (
+                                <span>[Omitido - Traslado] <strong>{item.email}</strong> (permanece en Sección: <em>{item.currentSectionCode}</em>)</span>
+                              )}
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div key={idx} style={borderStyle}>
+                              • {item}
+                            </div>
+                          );
+                        }
+                      })
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Modal Footer */}
+            <div className="modal-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button 
+                type="button" 
+                className="primary-btn" 
+                onClick={() => setShowSummaryModal(false)}
+                style={{ minWidth: '120px', background: 'var(--primary)', borderColor: 'var(--primary)' }}
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>

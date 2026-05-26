@@ -193,6 +193,8 @@ public class StudentService {
         int processed = 0;
         int total = 0;
         java.util.List<java.util.Map<String, Object>> conflicts = new java.util.ArrayList<>();
+        java.util.List<String> invalidEmails = new java.util.ArrayList<>();
+        java.util.List<String> processedEmails = new java.util.ArrayList<>();
 
         try (org.apache.poi.ss.usermodel.Workbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook(file.getInputStream())) {
             org.apache.poi.ss.usermodel.Sheet sheet = workbook.getSheetAt(0);
@@ -200,11 +202,20 @@ public class StudentService {
                 org.apache.poi.ss.usermodel.Cell cell = row.getCell(0, org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
                 String email = cell.getStringCellValue().trim();
                 
-                if (!email.toLowerCase().contains("@usach.cl")) {
-                    continue; // Skip headers or empty rows
+                if (email.isEmpty()) {
+                    continue; // Skip empty rows
+                }
+
+                if (!email.contains("@")) {
+                    continue; // Skip headers or non-email text
                 }
 
                 total++;
+
+                if (!email.toLowerCase().endsWith("@usach.cl")) {
+                    invalidEmails.add(email);
+                    continue;
+                }
 
                 List<Student> existingStudents = studentRepository.findByEmail(email.toLowerCase());
                 
@@ -247,6 +258,7 @@ public class StudentService {
                 student.setSection(section);
                 
                 studentRepository.save(student);
+                processedEmails.add(student.getEmail());
                 processed++;
             }
         }
@@ -255,11 +267,18 @@ public class StudentService {
         result.put("processed", processed);
         result.put("total", total);
         result.put("conflicts", conflicts);
-        if (conflicts.isEmpty()) {
-            result.put("message", "Se procesaron con éxito " + processed + " de " + total + " alumnos.");
-        } else {
-            result.put("message", "Se cargaron " + processed + " alumnos nuevos. Se detectaron " + conflicts.size() + " alumnos repetidos en el sistema.");
+        result.put("invalidEmails", invalidEmails);
+        result.put("processedEmails", processedEmails);
+        
+        StringBuilder msg = new StringBuilder();
+        msg.append("Se procesaron con éxito ").append(processed).append(" de ").append(total).append(" alumnos.");
+        if (!conflicts.isEmpty()) {
+            msg.append(" Se detectaron ").append(conflicts.size()).append(" alumnos repetidos.");
         }
+        if (!invalidEmails.isEmpty()) {
+            msg.append(" ").append(invalidEmails.size()).append(" correos no institucional o con error de formato no se cargaron.");
+        }
+        result.put("message", msg.toString());
         return result;
     }
 
