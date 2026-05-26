@@ -743,6 +743,28 @@ public class ExcelService {
         alignCenterStyle.setAlignment(HorizontalAlignment.CENTER);
         alignCenterStyle.setVerticalAlignment(VerticalAlignment.CENTER);
 
+        // Grey background cell styles for alternating student blocks
+        XSSFCellStyle dataStyleGrey = (XSSFCellStyle) workbook.createCellStyle();
+        dataStyleGrey.cloneStyleFrom(dataStyle);
+        byte[] greyRgb = new byte[]{(byte) 245, (byte) 245, (byte) 245};
+        dataStyleGrey.setFillForegroundColor(new XSSFColor(greyRgb, new DefaultIndexedColorMap()));
+        dataStyleGrey.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        XSSFCellStyle dataStyleActividadGrey = (XSSFCellStyle) workbook.createCellStyle();
+        dataStyleActividadGrey.cloneStyleFrom(dataStyleActividad);
+        dataStyleActividadGrey.setFillForegroundColor(new XSSFColor(greyRgb, new DefaultIndexedColorMap()));
+        dataStyleActividadGrey.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        XSSFCellStyle dataStyleWeekSeparatorGrey = (XSSFCellStyle) workbook.createCellStyle();
+        dataStyleWeekSeparatorGrey.cloneStyleFrom(dataStyleWeekSeparator);
+        dataStyleWeekSeparatorGrey.setFillForegroundColor(new XSSFColor(greyRgb, new DefaultIndexedColorMap()));
+        dataStyleWeekSeparatorGrey.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        XSSFCellStyle alignCenterStyleGrey = (XSSFCellStyle) workbook.createCellStyle();
+        alignCenterStyleGrey.cloneStyleFrom(alignCenterStyle);
+        alignCenterStyleGrey.setFillForegroundColor(new XSSFColor(greyRgb, new DefaultIndexedColorMap()));
+        alignCenterStyleGrey.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
         // Header Rows: Row 0 and Row 1
         Row row0 = sheet.createRow(0);
         Row row1 = sheet.createRow(1);
@@ -812,6 +834,7 @@ public class ExcelService {
         });
 
         int currentRowIdx = 2;
+        boolean isGreyStudent = false;
 
         for (String projectName : sortedProjectNames) {
             List<Student> studentsInProject = projectStudentsMap.get(projectName);
@@ -825,6 +848,12 @@ public class ExcelService {
             for (Student student : studentsInProject) {
                 int studentStartRow = currentRowIdx;
                 int totalStudentRows = ACTIVITY_TYPES.size();
+
+                // Select styles based on alternating student block flag
+                CellStyle currentStudentStyle = isGreyStudent ? alignCenterStyleGrey : alignCenterStyle;
+                CellStyle currentActivityStyle = isGreyStudent ? dataStyleActividadGrey : dataStyleActividad;
+                CellStyle currentCompStyle = isGreyStudent ? dataStyleGrey : dataStyle;
+                CellStyle currentRealStyle = isGreyStudent ? dataStyleWeekSeparatorGrey : dataStyleWeekSeparator;
 
                 // Get all advances of the student, sorted by week
                 List<Advance> studentAdvances = advances.stream()
@@ -844,11 +873,11 @@ public class ExcelService {
 
                     Cell studentCell = row.createCell(1);
                     studentCell.setCellValue(student.getName() + " " + student.getLastname());
-                    studentCell.setCellStyle(alignCenterStyle);
+                    studentCell.setCellStyle(currentStudentStyle);
 
                     Cell activityCell = row.createCell(2);
                     activityCell.setCellValue(activityType);
-                    activityCell.setCellStyle(dataStyleActividad);
+                    activityCell.setCellStyle(currentActivityStyle);
 
                     // Now populate weekly data
                     for (int w = 1; w <= maxWeek; w++) {
@@ -856,10 +885,10 @@ public class ExcelService {
                         int colEnd = colStart + 1;
 
                         Cell compCell = row.createCell(colStart);
-                        compCell.setCellStyle(dataStyle);
+                        compCell.setCellStyle(currentCompStyle);
 
                         Cell realCell = row.createCell(colEnd);
-                        realCell.setCellStyle(dataStyleWeekSeparator);
+                        realCell.setCellStyle(currentRealStyle);
 
                         // 1. Comprometido for week w: Look at week w - 1 future advances
                         if (w > 1) {
@@ -905,6 +934,9 @@ public class ExcelService {
 
                 // Merge student column (col 1) vertically for the 7 activity types
                 sheet.addMergedRegion(new CellRangeAddress(studentStartRow, studentStartRow + totalStudentRows - 1, 1, 1));
+                
+                // Toggle background color flag for the next student
+                isGreyStudent = !isGreyStudent;
             }
 
             // Merge project column (col 0) vertically for all student-activity rows in this project
