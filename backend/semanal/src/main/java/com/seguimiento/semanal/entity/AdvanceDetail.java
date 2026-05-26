@@ -38,5 +38,5 @@ public class AdvanceDetail {
     private String context;
 
     @Column(name = "hh")
-    private Integer hh;
+    private Double hh;
 }

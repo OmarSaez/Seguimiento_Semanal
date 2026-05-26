@@ -62,7 +62,7 @@ CREATE TABLE advance_detail (
     id_advance INTEGER NOT NULL,
     type_advance VARCHAR(255) NOT NULL,
     context VARCHAR(256),
-    hh INTEGER,
+    hh DOUBLE PRECISION,
     CONSTRAINT fk_advance FOREIGN KEY (id_advance) REFERENCES advance(id) ON DELETE CASCADE
 );
 

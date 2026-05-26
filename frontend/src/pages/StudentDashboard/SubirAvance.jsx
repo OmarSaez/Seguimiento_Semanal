@@ -211,7 +211,7 @@ const SubirAvance = () => {
         detailContexts: prev.detailContexts.filter(t => t !== type)
       }));
     }
-    if (field === 'hh' && value && !isNaN(value) && parseInt(value) > 0) {
+    if (field === 'hh' && value && !isNaN(value) && parseFloat(value) > 0 && (parseFloat(value) * 2) % 1 === 0) {
       setValidationErrors(prev => ({
         ...prev,
         detailHhs: prev.detailHhs.filter(t => t !== type)
@@ -270,7 +270,8 @@ const SubirAvance = () => {
           newErrors.detailContexts.push(d.type);
           hasError = true;
         }
-        if (!d.hh || isNaN(d.hh) || parseInt(d.hh) <= 0) {
+        const hhVal = parseFloat(d.hh);
+        if (!d.hh || isNaN(hhVal) || hhVal <= 0 || (hhVal * 2) % 1 !== 0) {
           newErrors.detailHhs.push(d.type);
           hasError = true;
         }
@@ -311,7 +312,10 @@ const SubirAvance = () => {
         if (hasEmptyDetailContext) {
           errorMsg = 'Debes rellenar este campo';
         } else {
-          const hasEmptyDetailHh = selectedDetails.some(d => !d.hh || isNaN(d.hh) || parseInt(d.hh) <= 0);
+          const hasEmptyDetailHh = selectedDetails.some(d => {
+            const hhVal = parseFloat(d.hh);
+            return !d.hh || isNaN(hhVal) || hhVal <= 0 || (hhVal * 2) % 1 !== 0;
+          });
           if (hasEmptyDetailHh) {
             errorMsg = 'Debes indicar las Horas Humanas';
           }
@@ -377,7 +381,7 @@ const SubirAvance = () => {
       details: selectedDetails.map(d => ({
         typeAdvance: d.type,
         context: d.context,
-        hh: parseInt(d.hh)
+        hh: parseFloat(d.hh)
       })),
       futureAdvances: selectedFutures.map(f => ({
         typeAdvance: f.type,
@@ -713,18 +717,43 @@ const SubirAvance = () => {
                         <div className="animate-fade-in" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <input
                             type="text"
-                            inputMode="numeric"
+                            inputMode="decimal"
                             value={detail.hh}
                             onChange={(e) => {
-                              const val = e.target.value.replace(/\D/g, '');
+                              let val = e.target.value.replace(/[^0-9.,]/g, '');
+                              val = val.replace(',', '.');
+                              const dotIndex = val.indexOf('.');
+                              if (dotIndex !== -1) {
+                                val = val.slice(0, dotIndex + 1) + val.slice(dotIndex + 1).replace(/\./g, '');
+                              }
+                              
                               if (val === '') {
                                 handleDetailChange(type, 'hh', '');
                                 return;
                               }
-                              const num = parseInt(val);
-                              if (num <= 168) {
-                                handleDetailChange(type, 'hh', num.toString());
+                              
+                              const parsed = parseFloat(val);
+                              if (isNaN(parsed)) {
+                                handleDetailChange(type, 'hh', val);
+                              } else if (parsed <= 168) {
+                                handleDetailChange(type, 'hh', val);
                               }
+                            }}
+                            onBlur={() => {
+                              if (!detail.hh) return;
+                              const parsed = parseFloat(detail.hh);
+                              if (isNaN(parsed) || parsed <= 0) {
+                                handleDetailChange(type, 'hh', '');
+                                return;
+                              }
+                              let rounded = Math.round(parsed * 2) / 2;
+                              if (rounded <= 0) {
+                                rounded = 0.5;
+                              }
+                              if (rounded > 168) {
+                                rounded = 168;
+                              }
+                              handleDetailChange(type, 'hh', rounded.toString());
                             }}
                             placeholder="HH"
                             required

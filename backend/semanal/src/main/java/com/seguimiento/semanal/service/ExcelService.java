@@ -54,7 +54,7 @@ public class ExcelService {
 
         try (Workbook workbook = new XSSFWorkbook()) {
             createRawDataSheet(workbook, advances);
-            createProjectSummarySheet(workbook, advances, section, allStudents);
+
             createAnalyticsSheet(workbook, advances, section, allStudents);
             createActivityAnalysisSheet(workbook, advances, section, allStudents);
 
@@ -264,9 +264,9 @@ public class ExcelService {
             List<Advance> projAdvances = projectAdvancesMap.getOrDefault(project.getId(), new ArrayList<>());
             List<Student> projStudents = projectStudentsMap.getOrDefault(project.getId(), new ArrayList<>());
             
-            int totalHh = projAdvances.stream()
+            double totalHh = projAdvances.stream()
                     .flatMap(a -> a.getDetails().stream())
-                    .mapToInt(d -> d.getHh() != null ? d.getHh() : 0)
+                    .mapToDouble(d -> d.getHh() != null ? d.getHh() : 0.0)
                     .sum();
             
             row.createCell(1).setCellValue(totalHh);
@@ -299,10 +299,10 @@ public class ExcelService {
             List<Advance> projAds = projectAdvancesMap.getOrDefault(project.getId(), new ArrayList<>());
             for (int w = 1; w <= maxWeek; w++) {
                 int finalW = w;
-                int hhWeek = projAds.stream()
+                double hhWeek = projAds.stream()
                         .filter(a -> a.getNumberWeek() == finalW)
                         .flatMap(a -> a.getDetails().stream())
-                        .mapToInt(d -> d.getHh() != null ? d.getHh() : 0)
+                        .mapToDouble(d -> d.getHh() != null ? d.getHh() : 0.0)
                         .sum();
                 row.createCell(w).setCellValue(hhWeek);
             }
@@ -564,13 +564,13 @@ public class ExcelService {
                 row.createCell(0).setCellValue(projectName);
                 row.createCell(1).setCellValue(studentName);
                 
-                Map<String, Integer> hhByType = studEntry.getValue().stream()
+                Map<String, Double> hhByType = studEntry.getValue().stream()
                         .flatMap(a -> a.getDetails().stream())
-                        .collect(Collectors.groupingBy(AdvanceDetail::getTypeAdvance, Collectors.summingInt(d -> d.getHh() != null ? d.getHh() : 0)));
+                        .collect(Collectors.groupingBy(AdvanceDetail::getTypeAdvance, Collectors.summingDouble(d -> d.getHh() != null ? d.getHh() : 0.0)));
 
-                int totalHhIndividual = 0;
+                double totalHhIndividual = 0.0;
                 for (int i = 0; i < ACTIVITY_TYPES.size(); i++) {
-                    int hh = hhByType.getOrDefault(ACTIVITY_TYPES.get(i), 0);
+                    double hh = hhByType.getOrDefault(ACTIVITY_TYPES.get(i), 0.0);
                     row.createCell(i + 2).setCellValue(hh);
                     totalHhIndividual += hh;
                 }
@@ -626,13 +626,13 @@ public class ExcelService {
             row.createCell(0).setCellValue(projectName);
             
             List<Advance> projAdvances = projectAdvancesMap.getOrDefault(project.getId(), new ArrayList<>());
-            Map<String, Integer> hhByType = projAdvances.stream()
+            Map<String, Double> hhByType = projAdvances.stream()
                     .flatMap(a -> a.getDetails().stream())
-                    .collect(Collectors.groupingBy(AdvanceDetail::getTypeAdvance, Collectors.summingInt(d -> d.getHh() != null ? d.getHh() : 0)));
+                    .collect(Collectors.groupingBy(AdvanceDetail::getTypeAdvance, Collectors.summingDouble(d -> d.getHh() != null ? d.getHh() : 0.0)));
 
-            int totalHhProject = 0;
+            double totalHhProject = 0.0;
             for (int i = 0; i < ACTIVITY_TYPES.size(); i++) {
-                int hh = hhByType.getOrDefault(ACTIVITY_TYPES.get(i), 0);
+                double hh = hhByType.getOrDefault(ACTIVITY_TYPES.get(i), 0.0);
                 row.createCell(i + 1).setCellValue(hh);
                 totalHhProject += hh;
             }
