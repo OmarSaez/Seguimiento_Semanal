@@ -57,6 +57,7 @@ public class ExcelService {
 
             createAnalyticsSheet(workbook, advances, section, allStudents);
             createActivityAnalysisSheet(workbook, advances, section, allStudents);
+            createCommitmentTrackingSheet(workbook, advances, section, allStudents);
 
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             workbook.write(outputStream);
@@ -641,6 +642,220 @@ public class ExcelService {
 
         for (int i = 0; i < ACTIVITY_TYPES.size() + 3; i++) {
             sheet.autoSizeColumn(i);
+        }
+    }
+
+    private void createCommitmentTrackingSheet(Workbook workbook, List<Advance> advances, Section section, List<Student> allStudents) {
+        Sheet sheet = workbook.createSheet("Seguimiento de Compromisos");
+        
+        List<String> ACTIVITY_TYPES = Arrays.asList(
+            "Coordinacion/Planificacion",
+            "Reuniones con cliente",
+            "Diseño/Desarrollo de Software",
+            "Instalaciones/Despliegue",
+            "Pruebas/QA",
+            "Documentacion",
+            "Entrega/Capacitacion"
+        );
+
+        // Find max week in the advances
+        int maxWeek = advances.stream().mapToInt(Advance::getNumberWeek).max().orElse(1);
+        if (maxWeek < 1) maxWeek = 1;
+
+        // Cell styles
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        
+        CellStyle subHeaderStyle = workbook.createCellStyle();
+        subHeaderStyle.cloneStyleFrom(headerStyle);
+        subHeaderStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        subHeaderStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        Font subFont = workbook.createFont();
+        subFont.setBold(true);
+        subFont.setColor(IndexedColors.BLACK.getIndex());
+        subHeaderStyle.setFont(subFont);
+
+        CellStyle dataStyle = workbook.createCellStyle();
+        dataStyle.setWrapText(true);
+        dataStyle.setVerticalAlignment(VerticalAlignment.TOP);
+        dataStyle.setBorderBottom(BorderStyle.THIN);
+        dataStyle.setBorderTop(BorderStyle.THIN);
+        dataStyle.setBorderLeft(BorderStyle.THIN);
+        dataStyle.setBorderRight(BorderStyle.THIN);
+
+        CellStyle alignCenterStyle = workbook.createCellStyle();
+        alignCenterStyle.cloneStyleFrom(dataStyle);
+        alignCenterStyle.setAlignment(HorizontalAlignment.CENTER);
+        alignCenterStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+        // Header Rows: Row 0 and Row 1
+        Row row0 = sheet.createRow(0);
+        Row row1 = sheet.createRow(1);
+
+        // Column headers
+        Cell c0 = row0.createCell(0); c0.setCellValue("Proyecto"); c0.setCellStyle(headerStyle);
+        Cell c1 = row0.createCell(1); c1.setCellValue("Alumno"); c1.setCellStyle(headerStyle);
+        Cell c2 = row0.createCell(2); c2.setCellValue("Actividad"); c2.setCellStyle(headerStyle);
+
+        // Create empty cells in row 1 for columns 0, 1, 2
+        row1.createCell(0).setCellStyle(headerStyle);
+        row1.createCell(1).setCellStyle(headerStyle);
+        row1.createCell(2).setCellStyle(headerStyle);
+
+        // Merge Row 0 and Row 1 vertically for columns 0, 1, 2
+        sheet.addMergedRegion(new CellRangeAddress(0, 1, 0, 0));
+        sheet.addMergedRegion(new CellRangeAddress(0, 1, 1, 1));
+        sheet.addMergedRegion(new CellRangeAddress(0, 1, 2, 2));
+
+        // Create headers for each week
+        for (int w = 1; w <= maxWeek; w++) {
+            int colStart = 3 + (w - 1) * 2;
+            int colEnd = colStart + 1;
+
+            // Week label in row 0
+            Cell weekCell = row0.createCell(colStart);
+            weekCell.setCellValue("Semana " + w);
+            weekCell.setCellStyle(headerStyle);
+            row0.createCell(colEnd).setCellStyle(headerStyle);
+
+            // Merge horizontally for Semana W
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, colStart, colEnd));
+
+            // Subheaders: Comprometido and Realizado in row 1
+            Cell compCell = row1.createCell(colStart);
+            compCell.setCellValue("Comprometido (Planificado en Sem " + (w - 1) + ")");
+            compCell.setCellStyle(subHeaderStyle);
+
+            Cell realCell = row1.createCell(colEnd);
+            realCell.setCellValue("Realizado (Hecho en Sem " + w + ")");
+            realCell.setCellStyle(subHeaderStyle);
+        }
+
+        // Group students by project name to avoid null or transient project references
+        Map<String, List<Student>> projectStudentsMap = new HashMap<>();
+        for (Student s : allStudents) {
+            String key = "Sin proyecto asignado";
+            if (s.getProyect() != null) {
+                key = (s.getProyect().getCode() != null ? s.getProyect().getCode() : "S/P") + " - " + s.getProyect().getName();
+            }
+            projectStudentsMap.computeIfAbsent(key, k -> new ArrayList<>()).add(s);
+        }
+
+        List<String> sortedProjectNames = new ArrayList<>(projectStudentsMap.keySet());
+        sortedProjectNames.sort((p1, p2) -> {
+            if (p1.equals("Sin proyecto asignado")) return 1;
+            if (p2.equals("Sin proyecto asignado")) return -1;
+            return p1.compareTo(p2);
+        });
+
+        int currentRowIdx = 2;
+
+        for (String projectName : sortedProjectNames) {
+            List<Student> studentsInProject = projectStudentsMap.get(projectName);
+            studentsInProject.sort(Comparator.comparing(s -> s.getName() + " " + s.getLastname()));
+
+            int projectStartRow = currentRowIdx;
+            int totalProjectRows = studentsInProject.size() * ACTIVITY_TYPES.size();
+
+            if (totalProjectRows == 0) continue;
+
+            for (Student student : studentsInProject) {
+                int studentStartRow = currentRowIdx;
+                int totalStudentRows = ACTIVITY_TYPES.size();
+
+                // Get all advances of the student, sorted by week
+                List<Advance> studentAdvances = advances.stream()
+                        .filter(a -> a.getStudent().getId().equals(student.getId()))
+                        .collect(Collectors.toList());
+
+                // Create a map from week number to Advance for fast access
+                Map<Integer, Advance> weekAdvanceMap = studentAdvances.stream()
+                        .collect(Collectors.toMap(Advance::getNumberWeek, a -> a, (a1, a2) -> a1));
+
+                for (String activityType : ACTIVITY_TYPES) {
+                    Row row = sheet.createRow(currentRowIdx);
+
+                    Cell projectCell = row.createCell(0);
+                    projectCell.setCellValue(projectName);
+                    projectCell.setCellStyle(alignCenterStyle);
+
+                    Cell studentCell = row.createCell(1);
+                    studentCell.setCellValue(student.getName() + " " + student.getLastname());
+                    studentCell.setCellStyle(alignCenterStyle);
+
+                    Cell activityCell = row.createCell(2);
+                    activityCell.setCellValue(activityType);
+                    activityCell.setCellStyle(dataStyle);
+
+                    // Now populate weekly data
+                    for (int w = 1; w <= maxWeek; w++) {
+                        int colStart = 3 + (w - 1) * 2;
+                        int colEnd = colStart + 1;
+
+                        Cell compCell = row.createCell(colStart);
+                        compCell.setCellStyle(dataStyle);
+
+                        Cell realCell = row.createCell(colEnd);
+                        realCell.setCellStyle(dataStyle);
+
+                        // 1. Comprometido for week w: Look at week w - 1 future advances
+                        if (w > 1) {
+                            Advance prevAdvance = weekAdvanceMap.get(w - 1);
+                            if (prevAdvance != null && prevAdvance.getFutureAdvances() != null) {
+                                String compText = prevAdvance.getFutureAdvances().stream()
+                                        .filter(fa -> fa.getTypeAdvance().equalsIgnoreCase(activityType))
+                                        .map(fa -> cleanValue(fa.getContext()))
+                                        .filter(txt -> !txt.equals("n/r"))
+                                        .collect(Collectors.joining("\n"));
+                                compCell.setCellValue(compText.isEmpty() ? "n/r" : compText);
+                            } else {
+                                compCell.setCellValue("n/r");
+                            }
+                        } else {
+                            compCell.setCellValue("N/A"); // Week 1 commitment would come from week 0, which doesn't exist
+                        }
+
+                        // 2. Realizado for week w: Look at week w actual details
+                        Advance currentAdvance = weekAdvanceMap.get(w);
+                        if (currentAdvance != null && currentAdvance.getDetails() != null) {
+                            String realText = currentAdvance.getDetails().stream()
+                                    .filter(d -> d.getTypeAdvance().equalsIgnoreCase(activityType))
+                                    .map(d -> {
+                                        String ctx = cleanValue(d.getContext());
+                                        Double hours = d.getHh();
+                                        String hoursStr = (hours != null) ? hours.toString() : "0";
+                                        if (hoursStr.endsWith(".0")) {
+                                            hoursStr = hoursStr.substring(0, hoursStr.length() - 2);
+                                        }
+                                        return ctx.equals("n/r") ? "n/r" : ctx + " (" + hoursStr + " hrs)";
+                                    })
+                                    .filter(txt -> !txt.equals("n/r"))
+                                    .collect(Collectors.joining("\n"));
+                            realCell.setCellValue(realText.isEmpty() ? "n/r" : realText);
+                        } else {
+                            realCell.setCellValue("n/r");
+                        }
+                    }
+
+                    currentRowIdx++;
+                }
+
+                // Merge student column (col 1) vertically for the 7 activity types
+                sheet.addMergedRegion(new CellRangeAddress(studentStartRow, studentStartRow + totalStudentRows - 1, 1, 1));
+            }
+
+            // Merge project column (col 0) vertically for all student-activity rows in this project
+            sheet.addMergedRegion(new CellRangeAddress(projectStartRow, projectStartRow + totalProjectRows - 1, 0, 0));
+        }
+
+        // Set column widths
+        for (int i = 0; i < 3 + maxWeek * 2; i++) {
+            if (i >= 3) {
+                sheet.setColumnWidth(i, 8000);
+            } else if (i == 0 || i == 1) {
+                sheet.setColumnWidth(i, 6000);
+            } else {
+                sheet.setColumnWidth(i, 7000);
+            }
         }
     }
 
