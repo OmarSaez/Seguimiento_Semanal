@@ -115,7 +115,7 @@ public class ExcelService {
     private void createRawDataSheet(Workbook workbook, List<Advance> advances) {
         Sheet sheet = workbook.createSheet("Reportes Detallados");
         String[] headers = {
-            "Fecha Envío", "Alumno", "Email", "Proyecto", "Semana", 
+            "Fecha Envío", "Alumno", "Email", "Proyecto", "Semana", "Lunes de la Semana",
             "Actividad Realizada", "Horas (HH)", "Contexto/Detalle", 
             "Problemas Reportados", "Solución / Acción", "Actividad Planeada Futura", "Detalle Planeado Futuro"
         };
@@ -130,6 +130,7 @@ public class ExcelService {
 
         int rowIdx = 1;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        DateTimeFormatter dateOnlyFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
         for (Advance advance : advances) {
             String studentName = advance.getStudent().getName() + " " + advance.getStudent().getLastname();
@@ -137,6 +138,16 @@ public class ExcelService {
             String projectName = advance.getProyect().getName();
             String sendDate = advance.getSendDate() != null ? advance.getSendDate().format(formatter) : "N/A";
             
+            String mondayDate = "N/A";
+            if (advance.getStudent() != null && advance.getStudent().getSection() != null) {
+                java.time.LocalDate sectionStart = advance.getStudent().getSection().getStartDate();
+                if (sectionStart != null && advance.getNumberWeek() != null) {
+                    java.time.LocalDate startMonday = sectionStart.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+                    java.time.LocalDate reportedWeekMonday = startMonday.plusWeeks(advance.getNumberWeek() - 1);
+                    mondayDate = reportedWeekMonday.format(dateOnlyFormatter);
+                }
+            }
+
             String problems = cleanValue(advance.getProblem());
             String solution = cleanValue(advance.getSolution());
 
@@ -148,13 +159,14 @@ public class ExcelService {
                 row.createCell(2).setCellValue(studentEmail);
                 row.createCell(3).setCellValue(projectName);
                 row.createCell(4).setCellValue("Semana " + advance.getNumberWeek());
-                row.createCell(5).setCellValue(detail.getTypeAdvance());
-                row.createCell(6).setCellValue(detail.getHh() != null ? detail.getHh() : 0);
-                row.createCell(7).setCellValue(detail.getContext() != null && !detail.getContext().trim().isEmpty() ? detail.getContext().trim() : "n/r");
-                row.createCell(8).setCellValue("n/r");
+                row.createCell(5).setCellValue(mondayDate);
+                row.createCell(6).setCellValue(detail.getTypeAdvance());
+                row.createCell(7).setCellValue(detail.getHh() != null ? detail.getHh() : 0);
+                row.createCell(8).setCellValue(detail.getContext() != null && !detail.getContext().trim().isEmpty() ? detail.getContext().trim() : "n/r");
                 row.createCell(9).setCellValue("n/r");
                 row.createCell(10).setCellValue("n/r");
                 row.createCell(11).setCellValue("n/r");
+                row.createCell(12).setCellValue("n/r");
             }
 
             // 2. Problemas / riesgos reportados
@@ -164,13 +176,14 @@ public class ExcelService {
             probRow.createCell(2).setCellValue(studentEmail);
             probRow.createCell(3).setCellValue(projectName);
             probRow.createCell(4).setCellValue("Semana " + advance.getNumberWeek());
-            probRow.createCell(5).setCellValue("Problemas/riesgos reportados");
-            probRow.createCell(6).setCellValue("n/r");
+            probRow.createCell(5).setCellValue(mondayDate);
+            probRow.createCell(6).setCellValue("Problemas/riesgos reportados");
             probRow.createCell(7).setCellValue("n/r");
-            probRow.createCell(8).setCellValue(problems);
-            probRow.createCell(9).setCellValue(solution);
-            probRow.createCell(10).setCellValue("n/r");
+            probRow.createCell(8).setCellValue("n/r");
+            probRow.createCell(9).setCellValue(problems);
+            probRow.createCell(10).setCellValue(solution);
             probRow.createCell(11).setCellValue("n/r");
+            probRow.createCell(12).setCellValue("n/r");
 
             // 3. Actividades futuras planeadas
             if (advance.getFutureAdvances() != null && !advance.getFutureAdvances().isEmpty()) {
@@ -181,13 +194,14 @@ public class ExcelService {
                     futRow.createCell(2).setCellValue(studentEmail);
                     futRow.createCell(3).setCellValue(projectName);
                     futRow.createCell(4).setCellValue("Semana " + advance.getNumberWeek());
-                    futRow.createCell(5).setCellValue("n/r");
+                    futRow.createCell(5).setCellValue(mondayDate);
                     futRow.createCell(6).setCellValue("n/r");
                     futRow.createCell(7).setCellValue("n/r");
                     futRow.createCell(8).setCellValue("n/r");
                     futRow.createCell(9).setCellValue("n/r");
-                    futRow.createCell(10).setCellValue(future.getTypeAdvance() != null ? future.getTypeAdvance() : "n/r");
-                    futRow.createCell(11).setCellValue(future.getContext() != null && !future.getContext().trim().isEmpty() ? future.getContext().trim() : "n/r");
+                    futRow.createCell(10).setCellValue("n/r");
+                    futRow.createCell(11).setCellValue(future.getTypeAdvance() != null ? future.getTypeAdvance() : "n/r");
+                    futRow.createCell(12).setCellValue(future.getContext() != null && !future.getContext().trim().isEmpty() ? future.getContext().trim() : "n/r");
                 }
             } else {
                 Row futRow = sheet.createRow(rowIdx++);
@@ -196,13 +210,14 @@ public class ExcelService {
                 futRow.createCell(2).setCellValue(studentEmail);
                 futRow.createCell(3).setCellValue(projectName);
                 futRow.createCell(4).setCellValue("Semana " + advance.getNumberWeek());
-                futRow.createCell(5).setCellValue("n/r");
+                futRow.createCell(5).setCellValue(mondayDate);
                 futRow.createCell(6).setCellValue("n/r");
                 futRow.createCell(7).setCellValue("n/r");
                 futRow.createCell(8).setCellValue("n/r");
                 futRow.createCell(9).setCellValue("n/r");
                 futRow.createCell(10).setCellValue("n/r");
                 futRow.createCell(11).setCellValue("n/r");
+                futRow.createCell(12).setCellValue("n/r");
             }
         }
 
