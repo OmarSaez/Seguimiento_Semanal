@@ -52,7 +52,9 @@ public class SecurityConfig {
                 "https://158.170.35.71",
                 "http://158.170.35.71",
                 "https://askone.diinf.usach.cl",
-                "http://askone.diinf.usach.cl"
+                "http://askone.diinf.usach.cl",
+                "https://pingeso.diinf.usach.cl",
+                "http://pingeso.diinf.usach.cl"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
