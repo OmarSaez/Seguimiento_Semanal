@@ -1333,9 +1333,21 @@ const SubirAvance = () => {
                 <h3 className="confirm-modal-title" style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-main)', fontWeight: '700' }}>
                   Resumen y Confirmación de Envío
                 </h3>
-                <p className="confirm-modal-subtitle" style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                  Por favor, revisa el detalle del reporte antes de enviarlo.
-                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px', flexWrap: 'wrap' }}>
+                  <span style={{ 
+                    fontSize: '0.82rem', 
+                    background: 'rgba(0, 164, 153, 0.1)', 
+                    color: 'var(--primary)', 
+                    padding: '2px 10px', 
+                    borderRadius: '20px', 
+                    fontWeight: '700' 
+                  }}>
+                    {availableWeeks.find(w => w.number === currentWeek)?.label || `Semana ${currentWeek}`}
+                  </span>
+                  <span className="confirm-modal-subtitle" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    • Revisa el detalle antes de enviar
+                  </span>
+                </div>
               </div>
             </div>
 
