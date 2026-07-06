@@ -1220,6 +1220,48 @@ const SubirAvance = () => {
           padding: '20px',
           boxSizing: 'border-box'
         }}>
+          <style>{`
+            @media (max-width: 600px) {
+              .confirm-modal-header {
+                padding: 16px 20px !important;
+                gap: 8px !important;
+              }
+              .confirm-modal-title {
+                font-size: 1.05rem !important;
+              }
+              .confirm-modal-subtitle {
+                font-size: 0.78rem !important;
+              }
+              .confirm-modal-body {
+                padding: 16px 20px !important;
+                gap: 16px !important;
+              }
+              .confirm-modal-footer {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                padding: 16px 20px !important;
+                gap: 12px !important;
+              }
+              .confirm-modal-footer-text {
+                text-align: center !important;
+                margin-right: 0 !important;
+                font-size: 0.85rem !important;
+              }
+              .confirm-modal-buttons-group {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 10px !important;
+                width: 100% !important;
+              }
+              .confirm-modal-buttons-group button {
+                width: 100% !important;
+                min-width: 0 !important;
+                margin: 0 !important;
+                justify-content: center !important;
+                text-align: center !important;
+              }
+            }
+          `}</style>
           <div className="animate-scale-up" style={{
             background: 'var(--bg-card)',
             border: '1px solid var(--glass-border)',
@@ -1233,26 +1275,26 @@ const SubirAvance = () => {
             overflow: 'hidden'
           }}>
             {/* Header */}
-            <div style={{
+            <div className="confirm-modal-header" style={{
               padding: '20px 28px',
               borderBottom: '1px solid var(--glass-border)',
               display: 'flex',
               alignItems: 'center',
               gap: '12px'
             }}>
-              <AlertCircle size={24} style={{ color: 'var(--primary)' }} />
+              <AlertCircle size={24} style={{ color: 'var(--primary)', flexShrink: 0 }} />
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-main)', fontWeight: '700' }}>
+                <h3 className="confirm-modal-title" style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-main)', fontWeight: '700' }}>
                   Resumen y Confirmación de Envío
                 </h3>
-                <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                <p className="confirm-modal-subtitle" style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                   Por favor, revisa el detalle del reporte antes de enviarlo.
                 </p>
               </div>
             </div>
 
             {/* Content (Scrollable) */}
-            <div style={{
+            <div className="confirm-modal-body" style={{
               padding: '24px 28px',
               overflowY: 'auto',
               flex: '1 1 auto',
@@ -1386,7 +1428,7 @@ const SubirAvance = () => {
             </div>
 
             {/* Footer */}
-            <div style={{
+            <div className="confirm-modal-footer" style={{
               padding: '20px 28px',
               borderTop: '1px solid var(--glass-border)',
               display: 'flex',
@@ -1394,29 +1436,32 @@ const SubirAvance = () => {
               alignItems: 'center',
               gap: '16px'
             }}>
-              <span style={{ marginRight: 'auto', fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: '600' }}>
+              <span className="confirm-modal-footer-text" style={{ marginRight: 'auto', fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: '600' }}>
                 ¿Estás seguro que quieres enviar el reporte?
               </span>
-              <button
-                type="button"
-                className="secondary-btn"
-                onClick={() => setShowConfirmModal(false)}
-                style={{ padding: '10px 20px', fontSize: '0.9rem', minWidth: '80px', borderRadius: '12px', margin: 0 }}
-              >
-                No, volver
-              </button>
-              <button
-                type="button"
-                className="primary-btn"
-                onClick={handleConfirmSubmit}
-                style={{ padding: '10px 24px', fontSize: '0.9rem', minWidth: '100px', borderRadius: '12px', margin: 0 }}
-              >
-                Sí, enviar
-              </button>
+              <div className="confirm-modal-buttons-group" style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={() => setShowConfirmModal(false)}
+                  style={{ padding: '10px 20px', fontSize: '0.9rem', minWidth: '80px', borderRadius: '12px', margin: 0 }}
+                >
+                  No, volver
+                </button>
+                <button
+                  type="button"
+                  className="primary-btn"
+                  onClick={handleConfirmSubmit}
+                  style={{ padding: '10px 24px', fontSize: '0.9rem', minWidth: '100px', borderRadius: '12px', margin: 0 }}
+                >
+                  Sí, enviar
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };
