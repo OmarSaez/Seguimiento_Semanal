@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   Send,
@@ -23,6 +24,7 @@ const ACTIVITY_TYPES = [
 ];
 
 const SubirAvance = () => {
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const authHeader = localStorage.getItem('auth');
 
@@ -421,15 +423,59 @@ const SubirAvance = () => {
 
   if (submitted) {
     return (
-      <div className="empty-state animate-fade-in">
+      <div className="empty-state animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '40px 20px' }}>
         <div className="success-icon" style={{ color: 'var(--success)', marginBottom: '16px' }}>
           <CheckCircle2 size={64} />
         </div>
         <h2>¡Reporte Enviado con Éxito!</h2>
-        <p>Tu avance semanal ha sido registrado correctamente.</p>
-        <button className="primary-btn" style={{ margin: '24px auto' }} onClick={() => window.location.reload()}>
-          Subir otro reporte
-        </button>
+        <p style={{ fontSize: '1.05rem', color: 'var(--text-light)', maxWidth: '400px', lineHeight: '1.5' }}>
+          Tu avance semanal de la <strong style={{ color: 'var(--primary)' }}>Semana {currentWeek}</strong> ha sido registrado correctamente.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '32px', width: '100%', maxWidth: '280px' }}>
+          <button 
+            className="primary-btn" 
+            style={{ 
+              margin: 0, 
+              width: '100%', 
+              justifyContent: 'center', 
+              padding: '12px 24px',
+              fontSize: '0.95rem'
+            }} 
+            onClick={() => window.location.reload()}
+          >
+            Subir otro reporte
+          </button>
+          <button 
+            className="secondary-btn" 
+            style={{ 
+              margin: 0, 
+              width: '100%', 
+              justifyContent: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(0, 0, 0, 0.02)',
+              border: '1px solid var(--border)',
+              padding: '12px 24px',
+              fontSize: '0.95rem',
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.02)',
+              transition: 'all 0.2s ease'
+            }} 
+            onClick={() => navigate('/student/my-advances')}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.06)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.02)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.02)';
+            }}
+          >
+            Ver mis reportes
+          </button>
+        </div>
       </div>
     );
   }
