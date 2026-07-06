@@ -481,7 +481,7 @@ const SubirAvance = () => {
   }
 
   return (
-    <div className="upload-advance animate-fade-in">
+    <div className="upload-advance animate-fade-in" style={showConfirmModal ? { position: 'relative', zIndex: 1000 } : {}}>
       <header className="page-header">
         <div>
           <h2>Subir un nuevo avance</h2>
@@ -1251,7 +1251,7 @@ const SubirAvance = () => {
       </form>
 
       {showConfirmModal && (
-        <div style={{
+        <div className="confirm-modal-backdrop" style={{
           position: 'fixed',
           top: 0,
           left: 0,
@@ -1268,30 +1268,38 @@ const SubirAvance = () => {
         }}>
           <style>{`
             @media (max-width: 600px) {
+              .confirm-modal-backdrop {
+                padding: 8px !important;
+              }
+              .confirm-modal-content-container {
+                max-height: 90dvh !important;
+                max-height: 90vh !important; /* Fallback */
+                border-radius: 12px !important;
+              }
               .confirm-modal-header {
-                padding: 16px 20px !important;
+                padding: 12px 16px !important;
                 gap: 8px !important;
               }
               .confirm-modal-title {
                 font-size: 1.05rem !important;
               }
               .confirm-modal-subtitle {
-                font-size: 0.78rem !important;
+                font-size: 0.75rem !important;
               }
               .confirm-modal-body {
-                padding: 16px 20px !important;
-                gap: 16px !important;
+                padding: 12px 14px !important;
+                gap: 12px !important;
               }
               .confirm-modal-footer {
                 flex-direction: column !important;
                 align-items: stretch !important;
-                padding: 16px 20px !important;
-                gap: 12px !important;
+                padding: 12px 16px !important;
+                gap: 10px !important;
               }
               .confirm-modal-footer-text {
                 text-align: center !important;
                 margin-right: 0 !important;
-                font-size: 0.85rem !important;
+                font-size: 0.8rem !important;
               }
               .confirm-modal-buttons-group {
                 display: grid !important;
@@ -1303,12 +1311,14 @@ const SubirAvance = () => {
                 width: 100% !important;
                 min-width: 0 !important;
                 margin: 0 !important;
+                padding: 10px 14px !important;
+                font-size: 0.85rem !important;
                 justify-content: center !important;
                 text-align: center !important;
               }
             }
           `}</style>
-          <div className="animate-scale-up" style={{
+          <div className="animate-scale-up confirm-modal-content-container" style={{
             background: 'var(--bg-card)',
             border: '1px solid var(--glass-border)',
             borderRadius: '16px',
