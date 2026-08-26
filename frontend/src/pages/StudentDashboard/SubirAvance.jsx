@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -481,7 +482,7 @@ const SubirAvance = () => {
   }
 
   return (
-    <div className="upload-advance animate-fade-in" style={showConfirmModal ? { position: 'relative', zIndex: 1000 } : {}}>
+    <div className="upload-advance animate-fade-in">
       <header className="page-header">
         <div>
           <h2>Subir un nuevo avance</h2>
@@ -1250,7 +1251,7 @@ const SubirAvance = () => {
         </div>
       </form>
 
-      {showConfirmModal && (
+      {showConfirmModal && createPortal(
         <div className="confirm-modal-backdrop" style={{
           position: 'fixed',
           top: 0,
@@ -1527,7 +1528,8 @@ const SubirAvance = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
